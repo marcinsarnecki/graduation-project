@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" data-th-fragment="layout(content, title)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+<!--    <script src="/js/signup_fragment.js" defer></script>-->
+    <title th:text="${title}">Default Title</title>
+    <th:block th:replace="~{fragments/bootstrap_fragment::bootstrap-head}"></th:block>
+    <link href="/css/login_signup_template.css" rel="stylesheet">
+    <link href="/css/common.css" rel="stylesheet">
+</head>
+<body>
+<div th:replace="~{fragments/login_logo_fragment::content}"></div>
+<div th:replace="${content}"></div>
+</body>
+</html>

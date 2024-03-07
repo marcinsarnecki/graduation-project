@@ -1,0 +1,72 @@
+.divider {
+    display: table;
+    margin: 1rem 0;
+    line-height: 1;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: rgba(0,0,0,.85);
+}
+
+.divider:after,.divider:before {
+    content: '';
+    display: table-cell;
+    top: 50%;
+    width: 50%;
+    background-repeat: no-repeat;
+    box-sizing: border-box;
+    background-image: url("/../images/divider.png");
+}
+
+.divider:before {
+    background-position: right 1em top 50%
+}
+
+.divider:after {
+    background-position: left 1em top 50%;
+}
+
+.logo-img {
+    max-height:100%; max-width:100%;
+    border: 2px solid #ccc;
+}
+
+.home-link-container {
+    height: 40px;
+}
+
+.logo-container {
+    height: 100%;
+    min-width: 40px;
+    max-width: 40px;
+    margin-right: 0.5rem;
+}
+
+.title-container {
+    white-space: nowrap;
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.link-color {
+    color: var(--link-color) !important;
+}
+
+.text-color {
+    color: var(--text-color) !important;
+}
+
+/*#passwordError {*/
+/*    display: none; !* Initially hidden *!*/
+/*    margin-top: 10px;*/
+/*    padding: 10px;*/
+/*    border-radius: 5px;*/
+/*    background-color: #ffe0e0; !* Lighter red background *!*/
+/*    border: 1px solid #ffcccc; !* Soft red border *!*/
+/*    color: #d63333; !* Darker red text *!*/
+/*    font-size: 14px;*/
+/*}*/
+
+/*#passwordError p {*/
+/*    margin: 5px 0;*/
+/*}*/

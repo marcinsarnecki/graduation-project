@@ -1,0 +1,48 @@
+<div data-th-fragment="content">
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <th:block th:replace="~{fragments/alert_message_fragment::alertMessages(${errorMessages}, ${successMessage})}"></th:block>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">Create your account</h5>
+                        <form data-th-action="@{/app-user/signup}" method="post" id="signup_form" data-th-object="${signUpRequest}">
+                            <div class="form-group">
+                                <label for="username">Username:</label>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email:</label>
+                                <input type="text" class="form-control" id="email" name="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="password">Password:</label>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                                <div id="passwordError" style="color: red;"></div>
+                            </div>
+                            <button type="submit" class="btn w-100 mt-3 custom-black-border border-4">Sign Up</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="text-center">
+                            <p class="mt-0">Already have an account? Log in!</p>
+                        </div>
+                        <a data-th-href="@{/login}"
+                           class="btn btn-black d-block w-100 custom-black-border border-4 rounded-lg">
+                            Login
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

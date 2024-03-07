@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:sec="http://www.w3.org/1999/xhtml" data-th-replace="~{main_template::layout(~{::#home_content}, 'Travel Planner')}">
+<head>
+    <title>Travel Planner</title>
+</head>
+<body>
+<div id="home_content">
+    <h1>welcome</h1>
+    <div sec:authorize="isAuthenticated()">
+        <p sec:authentication="principal"></p>
+    </div>
+</div>
+</body>
+</html>

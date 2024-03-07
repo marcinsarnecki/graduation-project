@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div data-th-fragment="alertMessages(errorMessages, successMessage)">
+  <div th:if="${errorMessages}" class="alert alert-danger small" style="text-align: center;">
+    <ul style="padding-left: 0;list-style-type: none; margin-bottom: 0.5rem; margin-top: 0.5rem">
+      <li th:each="error : ${errorMessages}" th:text="${error}" style="margin-bottom: 0;"></li>
+    </ul>
+  </div>
+  <div th:if="${successMessage}" class="alert alert-success small" style="text-align: center;">
+    <p th:text="${successMessage}" style="margin-bottom: 0;"></p>
+  </div>
+</div>
+
+</body>
+</html>

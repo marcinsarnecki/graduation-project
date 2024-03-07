@@ -1,0 +1,59 @@
+<div class="p-3 d-flex flex-column"  data-th-fragment="content">
+<!--  text-gray-400 bg-gray-900 bg-white bylo-->
+<!--  text-gray-700 bg-gray-100-->
+<!--  text-indigo-300 bg-indigo-900-->
+  <a data-th-href="@{/}" class="home-link-container d-flex justify-content-center align-items-center link-color text-decoration-none">
+    <div class="logo-container">
+      <img src="/images/logo.jpg" alt="Logo" class="rounded-circle border logo-img">
+    </div>
+    <div class="title-container">
+      <span class="fs-5">Travel Planner</span>
+    </div>
+  </a>
+  <ul class="list-unstyled ps-0">
+    <li class="horizontal-separator"></li> <!-- horizontal separator-->
+    <li class="mb-1">
+      <button class=" text-color btn btn-toggle align-items-center rounded collapsed " data-bs-toggle="collapse"
+              data-bs-target="#trips-collapse" aria-expanded="false">
+        Trips
+      </button>
+      <div class="collapse" id="trips-collapse">
+        <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+          <li><a href="#" class="text-color rounded">New trip</a></li>
+          <li><a href="#" class="text-color rounded">My trips</a></li>
+          <li><a href="#" class="text-color rounded">Ended trips</a></li>
+        </ul>
+      </div>
+    </li>
+    <li class="mb-1">
+      <button class="btn btn-toggle align-items-center rounded collapsed text-color" data-bs-toggle="collapse" data-bs-target="#friends-collapse" aria-expanded="false">
+        Friends
+      </button>
+      <div class="collapse" id="friends-collapse">
+        <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+          <li><a href="#" class="text-color rounded">Add friend</a></li>
+          <li><a href="#" class="text-color rounded">My friends</a></li>
+        </ul>
+      </div>
+    </li>
+    <li class="horizontal-separator"></li> <!-- horizontal separator-->
+    <li class="mb-1">
+      <button class="btn btn-toggle align-items-center rounded collapsed text-color" data-bs-toggle="collapse" data-bs-target="#account-collapse" aria-expanded="false">
+        Account
+      </button>
+      <div class="collapse" id="account-collapse">
+        <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small text-color">
+          <li><a href="#" class="text-color rounded">New...</a></li>
+          <li><a href="#" class="text-color rounded">Profile</a></li>
+          <li><a href="#" class="text-color rounded">Settings</a></li>
+          <li><a th:href="@{/app-user/change-password}" class="text-color rounded">Change Password</a></li>
+          <li>
+            <a href="#" data-sec-athorize="isAuthenticated()" class="text-color rounded" data-th-attr="onclick=|$('#logout_form').submit();|">Sign out</a>
+            <form id="logout_form" data-th-action="@{/logout}" method="post"></form>
+          </li>
+
+        </ul>
+      </div>
+    </li>
+  </ul>
+</div>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org" data-th-fragment="layout(content, title)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title}">Default Title</title>
+    <script src="/js/test.js" defer></script>
+    <th:block th:replace="~{fragments/bootstrap_fragment::bootstrap-head}"></th:block>
+    <link href="/css/main_template.css" rel="stylesheet">
+    <link href="/css/common.css" rel="stylesheet">
+
+</head>
+<body>
+<div class="left-div">
+    <div data-th-replace="~{fragments/sidebar_fragment::content}"></div>
+</div>
+<div class="right-div">
+    <main role="main">
+        <div th:replace="${content}"></div>
+    </main>
+</div>
+</body>
+</html>
