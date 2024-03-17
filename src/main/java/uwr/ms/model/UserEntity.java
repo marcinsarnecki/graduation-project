@@ -60,13 +60,7 @@ public class UserEntity {
         }
     }
 
-    public void updateAuthorities(List<AuthorityEntity> authorities) {
-        var toRemove = this
-                .userAuthorities
-                .stream()
-                .filter(uae -> !authorities.contains(uae.getAuthority()))
-                .toList();
-        toRemove.forEach(uae -> this.removeAuthority(uae.getAuthority()));
+    public void mergeAuthorities(List<AuthorityEntity> authorities) {
         authorities.forEach(this::addAuthority);
     }
 

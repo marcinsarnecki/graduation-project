@@ -1,0 +1,41 @@
+<div data-th-fragment="content">
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <th:block th:replace="~{fragments/alert_message_fragment::alertMessages(${errorMessages}, ${successMessage})}"></th:block>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">Edit Profile</h5>
+                        <form data-th-action="@{/app-user/edit-profile}" method="post" data-th-object="${user}">
+
+                            <div class="form-group">
+                                <label for="imageUrl">Image URL:</label>
+                                <input type="text" class="form-control" id="imageUrl" name="imageUrl" data-th-value="${user.imageUrl}">
+                                <div th:if="${user.imageUrl != null and !user.imageUrl.isEmpty()}">
+                                    <img src="" data-th-src="${user.imageUrl}" alt="Profile Image" class="img-thumbnail mt-2" style="display: block; margin-left: auto; margin-right: auto; max-width: 100px; max-height: 100px;">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="name">Name:</label>
+                                <input type="text" class="form-control" id="name" name="name" data-th-value="${user.name}" required>
+                            </div>
+
+<!--                            <div class="form-group">-->
+<!--                                <label for="username">Username:</label>-->
+<!--                                <input type="text" class="form-control" id="username" name="username" data-th-value="${user.username}" required>-->
+<!--                            </div>-->
+
+                            <div class="form-group">
+                                <label for="email">Email:</label>
+                                <input type="email" class="form-control" id="email" name="email" data-th-value="${user.email}" required>
+                            </div>
+
+                            <button type="submit" class="btn w-100 mt-3 custom-black-border border-4">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

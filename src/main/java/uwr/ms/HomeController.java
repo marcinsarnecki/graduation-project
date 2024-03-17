@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class HomeController {
     @GetMapping("/")
     public String home() {
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return "app-user/index";
     }
 

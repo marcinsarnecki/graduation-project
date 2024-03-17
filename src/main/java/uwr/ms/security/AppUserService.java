@@ -1,9 +1,9 @@
 package uwr.ms.security;
 
+import uwr.ms.AppUserController;
 import uwr.ms.model.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -68,10 +68,21 @@ public class AppUserService implements UserDetailsManager {
 
     @Transactional
     public void createUser(AppUser user) {
+        if(LoginProvider.GITHUB.equals(user.provider) && userExists(user.username)) //no throw with github user as this method is called every time github user logs in
+            return;
+        if(LoginProvider.APP.equals(user.provider)) {
+            if(userExists(user.username)) //throw because method shouldn't be called with normal user when they already exists
+                throw new UserAlreadyExistsException(String.format("User %s already exists",  user.username));
+            List<String> validationErrors = new ArrayList<>();
+            validationErrors.addAll(ValidationUtils.validatePassword(user.getPassword()));
+            validationErrors.addAll(ValidationUtils.validateEmail(user.getEmail()));
+            if (!validationErrors.isEmpty())
+                throw new ValidationException(validationErrors);
+        }
         UserEntity entity = saveUserIfNotExists(user);
         if(user.authorities != null) {
             List<AuthorityEntity> authorityEntityList = user.authorities.stream().map(auth -> saveAuthorityIfNotExists(auth.getAuthority(), user.getProvider())).toList();
-            entity.updateAuthorities(authorityEntityList);
+            entity.mergeAuthorities(authorityEntityList);
         }
         userEntityRepository.save(entity);
     }
@@ -117,21 +128,58 @@ public class AppUserService implements UserDetailsManager {
     }
 
     @Override
-    @Transactional
-    public void changePassword(String currentPassword, String newPassword) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        AppUser currentUser = (AppUser) authentication.getPrincipal();
-        if (!passwordEncoder.matches(currentPassword, currentUser.getPassword())) {
-            throw new IllegalArgumentException("New password and old password don't match"); //todo handle
-        }
-        userEntityRepository
-                .findById(currentUser.getUsername())
-                .ifPresent(ue -> ue.setPassword(passwordEncoder.encode(newPassword)));
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public boolean userExists(String username) {
         return userEntityRepository.existsById(username);
+    }
+
+    @Transactional
+    public void updateUserProfile(String username, AppUserController.EditProfileRequest editProfileRequest) {
+        UserEntity user = userEntityRepository.findById(username).orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<String> validationErrors = new ArrayList<>(ValidationUtils.validateEmail(editProfileRequest.email()));
+        if (!validationErrors.isEmpty())
+            throw new ValidationException(validationErrors);
+
+        if(!editProfileRequest.imageUrl().isEmpty())
+            user.setImageUrl(editProfileRequest.imageUrl());
+        user.setName(editProfileRequest.name());
+        user.setEmail(editProfileRequest.email());
+        userEntityRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(String oldPassword, String newPassword) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity user = userEntityRepository.findById(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Invalid old password");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userEntityRepository.save(user);
+    }
+
+    public void validateAndChangePassword(AppUserController.ChangePasswordRequest changePasswordRequest) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity user = userEntityRepository.findById(username).orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<String> validationErrors = new ArrayList<>();
+
+        if (!changePasswordRequest.newPassword().equals(changePasswordRequest.confirmNewPassword()))
+            validationErrors.add("New password and confirmed new password don't match");
+
+        if (!passwordEncoder.matches(changePasswordRequest.currentPassword(), user.getPassword()))
+            validationErrors.add("Current password is incorrect");
+
+        validationErrors.addAll(ValidationUtils.validatePassword(changePasswordRequest.newPassword()));
+
+        if (!validationErrors.isEmpty())
+            throw new ValidationException(validationErrors);
+
+        changePassword(changePasswordRequest.currentPassword(), changePasswordRequest.newPassword());
     }
 }

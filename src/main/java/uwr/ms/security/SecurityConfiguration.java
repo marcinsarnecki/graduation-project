@@ -42,7 +42,7 @@ public class SecurityConfiguration {
                         .userInfoEndpoint(ui -> ui.userService(appUserService.oauth2LoginHandler())))
                 .authorizeHttpRequests(c -> c
                         .requestMatchers("/login", "/app-user/signup", "/error").permitAll()
-//                        .requestMatchers("/app-user/change-password").hasAuthority("test_role_1")
+                        .requestMatchers("/app-user/change-password").hasAuthority("STANDARD_USER")
                         .anyRequest().authenticated())
                 .build();
     }

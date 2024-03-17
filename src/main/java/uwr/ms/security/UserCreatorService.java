@@ -16,8 +16,10 @@ public class UserCreatorService {
 
     @PostConstruct
     public void createHardcodedUsers() {
-        var user1 = AppUser.builder().username("user1").password(passwordEncoder.encode("1234")).provider(LoginProvider.APP).authorities(List.of(new SimpleGrantedAuthority("test_role_2"))).build();
-        var user2 = AppUser.builder().username("user2").password(passwordEncoder.encode("12345")).provider(LoginProvider.APP).authorities(List.of(new SimpleGrantedAuthority("test_role_1"))).build();
+        var user1 = AppUser.builder().username("user1").email("user1@example.com").password(passwordEncoder.encode("abcd1234!")).provider(LoginProvider.APP).authorities(List.of(new SimpleGrantedAuthority("test_role_2"), new SimpleGrantedAuthority("STANDARD_USER"))).build();
+        var user2 = AppUser.builder().username("user2").email("user2@example.com").password(passwordEncoder.encode("abcd1234!!")).provider(LoginProvider.APP).authorities(List.of(new SimpleGrantedAuthority("test_role_1"), new SimpleGrantedAuthority("STANDARD_USER"))).build();
+        appUserService.deleteUser(user1.username);
+        appUserService.deleteUser(user2.username);
         appUserService.createUser(user1);
         appUserService.createUser(user2);
     }
