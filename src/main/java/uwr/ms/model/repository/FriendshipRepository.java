@@ -1,8 +1,9 @@
-package uwr.ms.model;
+package uwr.ms.model.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import uwr.ms.model.entity.FriendshipEntity;
+import uwr.ms.constant.FriendshipStatus;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 

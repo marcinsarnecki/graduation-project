@@ -1,6 +1,6 @@
-package uwr.ms.model;
+package uwr.ms.model.entity;
 
-import uwr.ms.security.LoginProvider;
+import uwr.ms.constant.LoginProvider;
 import jakarta.persistence.*;
 import lombok.Data;
 

@@ -1,4 +1,4 @@
-package uwr.ms.model;
+package uwr.ms.constant;
 
 public enum FriendshipStatus {
     REQUESTED, ACCEPTED, DECLINED, BLOCKED

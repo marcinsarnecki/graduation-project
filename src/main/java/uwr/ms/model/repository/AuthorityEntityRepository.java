@@ -1,6 +1,7 @@
-package uwr.ms.model;
+package uwr.ms.model.repository;
 
 import org.springframework.data.repository.CrudRepository;
+import uwr.ms.model.entity.AuthorityEntity;
 
 import java.util.Optional;
 

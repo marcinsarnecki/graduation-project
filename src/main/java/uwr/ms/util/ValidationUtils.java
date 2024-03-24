@@ -1,4 +1,4 @@
-package uwr.ms.security;
+package uwr.ms.util;
 import lombok.experimental.UtilityClass;
 
 import java.util.ArrayList;

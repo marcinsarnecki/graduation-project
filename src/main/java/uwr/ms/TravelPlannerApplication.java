@@ -1,15 +1,7 @@
 package uwr.ms;
 
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import uwr.ms.model.FriendshipEntity;
-import uwr.ms.security.AppUserService;
-import uwr.ms.security.FriendshipService;
-
-import java.util.List;
-import java.util.Scanner;
 
 @SpringBootApplication(scanBasePackages = {"uwr.ms"})
 public class TravelPlannerApplication {

@@ -1,4 +1,4 @@
-package uwr.ms.model;
+package uwr.ms.model.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;

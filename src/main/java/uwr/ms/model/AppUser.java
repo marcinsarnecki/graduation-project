@@ -1,10 +1,11 @@
-package uwr.ms.security;
+package uwr.ms.model;
 
 import lombok.Builder;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import uwr.ms.constant.LoginProvider;
 
 import java.util.Collection;
 import java.util.Map;

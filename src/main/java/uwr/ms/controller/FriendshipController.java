@@ -1,4 +1,4 @@
-package uwr.ms;
+package uwr.ms.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import uwr.ms.model.FriendshipEntity;
-import uwr.ms.model.UserEntity;
-import uwr.ms.security.FriendshipService;
+import uwr.ms.model.entity.FriendshipEntity;
+import uwr.ms.model.entity.UserEntity;
+import uwr.ms.service.FriendshipService;
 
 import java.security.Principal;
 import java.util.List;

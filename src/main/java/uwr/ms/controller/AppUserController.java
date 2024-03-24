@@ -1,10 +1,13 @@
-package uwr.ms;
+package uwr.ms.controller;
 
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import uwr.ms.security.*;
+import uwr.ms.constant.LoginProvider;
+import uwr.ms.exception.UserAlreadyExistsException;
+import uwr.ms.exception.ValidationException;
+import uwr.ms.model.AppUser;
 import jakarta.validation.Valid;
 import lombok.Value;
 import lombok.extern.log4j.Log4j2;
@@ -13,6 +16,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import uwr.ms.service.AppUserService;
+
 import java.util.List;
 
 @Controller

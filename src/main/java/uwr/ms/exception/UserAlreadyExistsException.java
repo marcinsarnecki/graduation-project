@@ -1,4 +1,4 @@
-package uwr.ms.security;
+package uwr.ms.exception;
 
 public class UserAlreadyExistsException extends RuntimeException {
     public UserAlreadyExistsException(String message) {

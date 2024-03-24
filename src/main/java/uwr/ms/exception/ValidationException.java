@@ -1,4 +1,4 @@
-package uwr.ms.security;
+package uwr.ms.exception;
 
 import lombok.Getter;
 

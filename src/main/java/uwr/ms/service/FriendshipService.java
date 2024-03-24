@@ -1,9 +1,13 @@
-package uwr.ms.security;
+package uwr.ms.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uwr.ms.model.*;
+import uwr.ms.constant.FriendshipStatus;
+import uwr.ms.model.entity.FriendshipEntity;
+import uwr.ms.model.entity.UserEntity;
+import uwr.ms.model.repository.FriendshipRepository;
+import uwr.ms.model.repository.UserEntityRepository;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,7 +1,7 @@
-package uwr.ms.security;
+package uwr.ms.service;
 
-import uwr.ms.AppUserController;
-import uwr.ms.model.*;
+import uwr.ms.constant.LoginProvider;
+import uwr.ms.controller.AppUserController;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -16,6 +16,14 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import uwr.ms.exception.UserAlreadyExistsException;
+import uwr.ms.exception.ValidationException;
+import uwr.ms.model.entity.AuthorityEntity;
+import uwr.ms.model.entity.UserEntity;
+import uwr.ms.model.repository.AuthorityEntityRepository;
+import uwr.ms.model.repository.UserEntityRepository;
+import uwr.ms.model.AppUser;
+import uwr.ms.util.ValidationUtils;
 
 import java.util.*;
 
@@ -46,7 +54,7 @@ public class AppUserService implements UserDetailsManager {
 
 
     @Bean
-    OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2LoginHandler() {
+    public OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2LoginHandler() {
         return userRequest -> {
             LoginProvider provider = LoginProvider.valueOf(userRequest.getClientRegistration().getRegistrationId().toUpperCase());
             OAuth2User oAuth2User = defaultOAuth2UserService.loadUser(userRequest);
@@ -68,11 +76,11 @@ public class AppUserService implements UserDetailsManager {
 
     @Transactional
     public void createUser(AppUser user) {
-        if(LoginProvider.GITHUB.equals(user.provider) && userExists(user.username)) //no throw with github user as this method is called every time github user logs in
+        if(LoginProvider.GITHUB.equals(user.getProvider()) && userExists(user.getUsername())) //no throw with github user as this method is called every time github user logs in
             return;
-        if(LoginProvider.APP.equals(user.provider)) {
-            if(userExists(user.username)) //throw because method shouldn't be called with normal user when they already exists
-                throw new UserAlreadyExistsException(String.format("User %s already exists",  user.username));
+        if(LoginProvider.APP.equals(user.getProvider())) {
+            if(userExists(user.getUsername())) //throw because method shouldn't be called with normal user when they already exists
+                throw new UserAlreadyExistsException(String.format("User %s already exists",  user.getUsername()));
             List<String> validationErrors = new ArrayList<>();
             validationErrors.addAll(ValidationUtils.validatePassword(user.getPassword()));
             validationErrors.addAll(ValidationUtils.validateEmail(user.getEmail()));
@@ -80,8 +88,8 @@ public class AppUserService implements UserDetailsManager {
                 throw new ValidationException(validationErrors);
         }
         UserEntity entity = saveUserIfNotExists(user);
-        if(user.authorities != null) {
-            List<AuthorityEntity> authorityEntityList = user.authorities.stream().map(auth -> saveAuthorityIfNotExists(auth.getAuthority(), user.getProvider())).toList();
+        if(user.getAuthorities() != null) {
+            List<AuthorityEntity> authorityEntityList = user.getAuthorities().stream().map(auth -> saveAuthorityIfNotExists(auth.getAuthority(), user.getProvider())).toList();
             entity.mergeAuthorities(authorityEntityList);
         }
         userEntityRepository.save(entity);

@@ -1,7 +1,8 @@
-package uwr.ms.model;
+package uwr.ms.model.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import uwr.ms.constant.FriendshipStatus;
 
 @Entity
 @Table(name = "friendships")
