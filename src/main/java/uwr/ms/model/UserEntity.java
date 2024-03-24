@@ -27,8 +27,15 @@ public class UserEntity {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     List<UserAuthorityEntity> userAuthorities = new ArrayList<>();
 
+    @OneToMany(mappedBy = "requester", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<FriendshipEntity> sentFriendRequests;
 
-    public UserEntity() {}
+    @OneToMany(mappedBy = "addressee", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<FriendshipEntity> receivedFriendRequests;
+
+
+    public UserEntity() {
+    }
 
     public UserEntity(String username, String password, String email, String name, LoginProvider provider, String imageUrl) {
         this.username = username;

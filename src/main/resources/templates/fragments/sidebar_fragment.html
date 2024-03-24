@@ -1,7 +1,4 @@
 <div class="p-3 d-flex flex-column"  data-th-fragment="content">
-<!--  text-gray-400 bg-gray-900 bg-white bylo-->
-<!--  text-gray-700 bg-gray-100-->
-<!--  text-indigo-300 bg-indigo-900-->
   <a data-th-href="@{/}" class="home-link-container d-flex justify-content-center align-items-center link-color text-decoration-none">
     <div class="logo-container">
       <img src="/images/logo.jpg" alt="Logo" class="rounded-circle border logo-img">
@@ -31,8 +28,9 @@
       </button>
       <div class="collapse" id="friends-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-          <li><a href="#" class="text-color rounded">Add friend</a></li>
-          <li><a href="#" class="text-color rounded">My friends</a></li>
+          <li><a th:href="@{/friends/add-friend}" class="text-color rounded">Add friend</a></li>
+          <li><a th:href="@{/friends/requests}" class="text-color rounded">Requests</a></li>
+          <li><a th:href="@{/friends/my-friends}" class="text-color rounded">My friends</a></li>
         </ul>
       </div>
     </li>

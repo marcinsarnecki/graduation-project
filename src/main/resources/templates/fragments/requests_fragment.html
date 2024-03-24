@@ -1,0 +1,51 @@
+<div data-th-fragment="content">
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <th:block th:replace="~{fragments/alert_message_fragment::alertMessages(${errorMessages}, ${successMessage})}"></th:block>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">Friend Requests</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center" data-th-each="request : ${friendRequests}">
+                                <span data-th-text="${request.requester.username}"></span>
+                                <div>
+                                    <form data-th-action="@{/friends/accept-request}" method="post" class="d-inline">
+                                        <input type="hidden" name="requestId" data-th-value="${request.id}" />
+                                        <button type="submit" class="btn btn-outline-primary btn-sm">Accept</button>
+                                    </form>
+                                    <form data-th-action="@{/friends/decline-request}" method="post" class="d-inline">
+                                        <input type="hidden" name="requestId" data-th-value="${request.id}" />
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm">Decline</button>
+                                    </form>
+                                    <form data-th-action="@{/friends/block-request}" method="post" class="d-inline">
+                                        <input type="hidden" name="requestId" data-th-value="${request.id}" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Block</button>
+                                    </form>
+                                </div>
+                            </li>
+                            <li class="list-group-item" data-th-if="${friendRequests.isEmpty()}">
+                                No friend requests.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card mt-4" data-th-if="${!blockedRequests.isEmpty()}">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">Blocked Users</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center" data-th-each="blocked : ${blockedRequests}">
+                                <span data-th-text="${blocked.requester.username}"></span>
+                                <form data-th-action="@{/friends/unblock-request}" method="post" class="d-inline">
+                                    <input type="hidden" name="requestId" data-th-value="${blocked.id}" />
+                                    <button type="submit" class="btn btn-outline-warning btn-sm">Unblock</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
