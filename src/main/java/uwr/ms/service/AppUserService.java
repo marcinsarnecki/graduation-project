@@ -1,8 +1,9 @@
 package uwr.ms.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import uwr.ms.constant.LoginProvider;
+import uwr.ms.constant.TripParticipantRole;
 import uwr.ms.controller.AppUserController;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,8 +20,12 @@ import org.springframework.transaction.annotation.Transactional;
 import uwr.ms.exception.UserAlreadyExistsException;
 import uwr.ms.exception.ValidationException;
 import uwr.ms.model.entity.AuthorityEntity;
+import uwr.ms.model.entity.TripEntity;
+import uwr.ms.model.entity.TripParticipantEntity;
 import uwr.ms.model.entity.UserEntity;
 import uwr.ms.model.repository.AuthorityEntityRepository;
+import uwr.ms.model.repository.TripEntityRepository;
+import uwr.ms.model.repository.TripParticipantEntityRepository;
 import uwr.ms.model.repository.UserEntityRepository;
 import uwr.ms.model.AppUser;
 import uwr.ms.util.ValidationUtils;
@@ -28,12 +33,27 @@ import uwr.ms.util.ValidationUtils;
 import java.util.*;
 
 @Service
-@RequiredArgsConstructor
 public class AppUserService implements UserDetailsManager {
     private final PasswordEncoder passwordEncoder;
     private final DefaultOAuth2UserService defaultOAuth2UserService = new DefaultOAuth2UserService();
     private final UserEntityRepository userEntityRepository;
     private final AuthorityEntityRepository authorityEntityRepository;
+    private final TripParticipantEntityRepository tripParticipantEntityRepository;
+    private final TripEntityRepository tripEntityRepository;
+
+    @Autowired
+    public AppUserService(PasswordEncoder passwordEncoder, UserEntityRepository userEntityRepository, AuthorityEntityRepository authorityEntityRepository, TripParticipantEntityRepository tripParticipantEntityRepository, TripEntityRepository tripEntityRepository) {
+        this.passwordEncoder = passwordEncoder;
+        this.userEntityRepository = userEntityRepository;
+        this.authorityEntityRepository = authorityEntityRepository;
+        this.tripParticipantEntityRepository = tripParticipantEntityRepository;
+        this.tripEntityRepository = tripEntityRepository;
+    }
+
+    public UserEntity findUserEntityByUsername(String username) {
+        return userEntityRepository.findById(username).orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) {
@@ -129,10 +149,19 @@ public class AppUserService implements UserDetailsManager {
     }
 
     @Override
+    @Transactional
     public void deleteUser(String username) {
-        if(userExists(username)) {
-            userEntityRepository.deleteById(username);
+        UserEntity user = userEntityRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        List<TripParticipantEntity> ownedTripParticipants = tripParticipantEntityRepository.findByUserAndRole(user, TripParticipantRole.OWNER);
+        for (TripParticipantEntity ownedParticipant : ownedTripParticipants) {
+            TripEntity trip = ownedParticipant.getTrip();
+            trip.getParticipants().clear();
+            tripEntityRepository.save(trip);
+
+            tripEntityRepository.delete(trip);
         }
+        userEntityRepository.delete(user);
     }
 
     @Override

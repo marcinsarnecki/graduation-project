@@ -4,9 +4,7 @@ import uwr.ms.constant.LoginProvider;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 @Entity
 @Table(name = "users")
@@ -33,6 +31,8 @@ public class UserEntity {
     @OneToMany(mappedBy = "addressee", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<FriendshipEntity> receivedFriendRequests;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<TripParticipantEntity> participatingTrips = new HashSet<>();
 
     public UserEntity() {
     }

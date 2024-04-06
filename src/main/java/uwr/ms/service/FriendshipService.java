@@ -68,8 +68,6 @@ public class FriendshipService {
     public void declineFriendRequest(Long requestId) {
         FriendshipEntity request = friendshipRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("Friend request not found"));
-//        request.setStatus(FriendshipStatus.DECLINED);
-//        friendshipRepository.save(request);
         friendshipRepository.delete(request); //delete request from db, user can try to request again
     }
 
