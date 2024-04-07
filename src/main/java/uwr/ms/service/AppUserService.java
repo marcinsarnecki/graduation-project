@@ -82,7 +82,7 @@ public class AppUserService implements UserDetailsManager {
                     .username(oAuth2User.getAttribute("login"))
                     .name(oAuth2User.getAttribute("name"))
                     .email(oAuth2User.getAttribute("email"))
-                    .password(passwordEncoder.encode(UUID.randomUUID().toString()))
+                    .password(UUID.randomUUID().toString())
                     .userId(oAuth2User.getName())
                     .provider(provider)
                     .imageUrl(oAuth2User.getAttribute("avatar_url"))
@@ -107,6 +107,7 @@ public class AppUserService implements UserDetailsManager {
             if (!validationErrors.isEmpty())
                 throw new ValidationException(validationErrors);
         }
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         UserEntity entity = saveUserIfNotExists(user);
         if(user.getAuthorities() != null) {
             List<AuthorityEntity> authorityEntityList = user.getAuthorities().stream().map(auth -> saveAuthorityIfNotExists(auth.getAuthority(), user.getProvider())).toList();
@@ -189,13 +190,16 @@ public class AppUserService implements UserDetailsManager {
     @Transactional
     public void changePassword(String oldPassword, String newPassword) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        this.changePassword(username, oldPassword, newPassword);
+    }
+
+    @Transactional
+    public void changePassword(String username, String oldPassword, String newPassword) {
         UserEntity user = userEntityRepository.findById(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
             throw new IllegalArgumentException("Invalid old password");
         }
-
         user.setPassword(passwordEncoder.encode(newPassword));
         userEntityRepository.save(user);
     }
@@ -217,6 +221,6 @@ public class AppUserService implements UserDetailsManager {
         if (!validationErrors.isEmpty())
             throw new ValidationException(validationErrors);
 
-        changePassword(changePasswordRequest.currentPassword(), changePasswordRequest.newPassword());
+        changePassword(username, changePasswordRequest.currentPassword(), changePasswordRequest.newPassword());
     }
 }

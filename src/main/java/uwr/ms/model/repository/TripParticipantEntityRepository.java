@@ -19,5 +19,7 @@ public interface TripParticipantEntityRepository extends JpaRepository<TripParti
     void deleteByUser(UserEntity user);
 
     List<TripParticipantEntity> findByUserAndRole(UserEntity user, TripParticipantRole owner);
+
+    boolean existsByUserUsernameAndTripId(String test_user_username, Long id);
 }
 
