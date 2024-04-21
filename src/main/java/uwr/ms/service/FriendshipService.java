@@ -1,28 +1,32 @@
 package uwr.ms.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uwr.ms.constant.FriendshipStatus;
 import uwr.ms.model.entity.FriendshipEntity;
+import uwr.ms.model.entity.TripParticipantEntity;
 import uwr.ms.model.entity.UserEntity;
 import uwr.ms.model.repository.FriendshipRepository;
 import uwr.ms.model.repository.UserEntityRepository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class FriendshipService {
 
     private final FriendshipRepository friendshipRepository;
     private final UserEntityRepository userEntityRepository;
+    private final TripService tripService;
 
     @Autowired
-    public FriendshipService(FriendshipRepository friendshipRepository, UserEntityRepository userEntityRepository) {
+    public FriendshipService(FriendshipRepository friendshipRepository, UserEntityRepository userEntityRepository, TripService tripService) {
         this.friendshipRepository = friendshipRepository;
         this.userEntityRepository = userEntityRepository;
+        this.tripService = tripService;
     }
 
     @Transactional
@@ -68,7 +72,7 @@ public class FriendshipService {
     public void declineFriendRequest(Long requestId) {
         FriendshipEntity request = friendshipRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("Friend request not found"));
-        friendshipRepository.delete(request); //delete request from db, user can try to request again
+        friendshipRepository.delete(request);
     }
 
     @Transactional
@@ -88,14 +92,29 @@ public class FriendshipService {
 
     @Transactional(readOnly = true)
     public List<UserEntity> getAllFriends(String username) {
-        List<UserEntity> friends = new ArrayList<>();
-        friendshipRepository.findByRequesterUsernameAndStatus(username, FriendshipStatus.ACCEPTED).forEach(friendshipEntity -> {
-            friends.add(friendshipEntity.getAddressee());
-        });
-        friendshipRepository.findByAddresseeUsernameAndStatus(username, FriendshipStatus.ACCEPTED).forEach(friendshipEntity -> {
-            friends.add(friendshipEntity.getRequester());
-        });
-        return friends;
+        return userEntityRepository.findFriendsByUsername(username);
+//        List<UserEntity> friends = new ArrayList<>();
+//        friendshipRepository.findByRequesterUsernameAndStatus(username, FriendshipStatus.ACCEPTED).forEach(friendshipEntity -> {
+//            friends.add(friendshipEntity.getAddressee());
+//        });
+//        friendshipRepository.findByAddresseeUsernameAndStatus(username, FriendshipStatus.ACCEPTED).forEach(friendshipEntity -> {
+//            friends.add(friendshipEntity.getRequester());
+//        });
+//        return friends;
+    }
+
+    public Page<UserEntity> getFriendsPageable(String username, Pageable pageable) {
+        return userEntityRepository.findFriendsByUsername(username, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserEntity> getAvailableFriends(String username, Long tripId) {
+        List<UserEntity> allFriends = getAllFriends(username);
+        Set<UserEntity> participants = tripService.findAllParticipantsByTripId(tripId).stream().map(TripParticipantEntity::getUser).collect(Collectors.toSet());
+
+        return allFriends.stream()
+                .filter(friend -> !participants.contains(friend))
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)

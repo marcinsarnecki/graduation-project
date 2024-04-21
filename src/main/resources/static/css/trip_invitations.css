@@ -1,0 +1,12 @@
+.invitation-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.list-container {
+    max-height: 40rem;
+    overflow-y: auto;
+    margin-top: 10px;
+    padding: 0;
+}

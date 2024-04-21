@@ -1,0 +1,32 @@
+.list-container {
+    max-height: 30rem;
+    overflow-y: auto;
+    margin-top: 10px;
+    padding: 0;
+}
+
+#friendsList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#friendsList li {
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+#friendsList li:hover {
+    background-color: #f8f9fa;
+}
+
+.first-visible {
+    border-top: 1px solid #ddd !important;
+    border-top-left-radius: .25rem;
+    border-top-right-radius: .25rem;
+}
+
+.last-visible {
+    border-bottom-left-radius: .25rem;
+    border-bottom-right-radius: .25rem;
+}

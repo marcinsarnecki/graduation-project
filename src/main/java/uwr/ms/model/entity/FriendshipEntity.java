@@ -32,7 +32,4 @@ public class FriendshipEntity {
                 ", status=" + status +
                 '}';
     }
-
-//    private LocalDateTime createdAt;
-//    private LocalDateTime updatedAt;
 }

@@ -6,18 +6,31 @@
         <div class="card">
           <div class="card-body">
             <h5 class="card-title text-center">My Friends</h5>
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item d-flex justify-content-between align-items-center" data-th-each="friend : ${friends}">
-                <span data-th-text="${friend.username}"></span>
-                <form data-th-action="@{/friends/delete-friend}" method="post" class="d-inline">
-                  <input type="hidden" name="friendUsername" data-th-value="${friend.username}" />
+            <ul class="list-group list-group-flush" th:unless="${#lists.isEmpty(friendsPage)}">
+              <li class="list-group-item d-flex justify-content-between align-items-center" th:each="friend : ${friendsPage}">
+                <span th:text="${friend.username}"></span>
+                <form th:action="@{/friends/delete-friend}" method="post" class="d-inline">
+                  <input type="hidden" name="friendUsername" th:value="${friend.username}" />
                   <button type="submit" class="btn btn-outline-danger btn-sm">Unfriend</button>
                 </form>
               </li>
-              <li class="list-group-item" data-th-if="${friends.isEmpty()}">
-                No friends yet.
-              </li>
             </ul>
+            <div th:if="${#lists.isEmpty(friendsPage)}">
+              <p>No friends found.</p>
+            </div>
+            <nav aria-label="Page navigation" class="mt-4">
+              <ul class="pagination justify-content-center">
+                <li th:class="|page-item ${friendsPage.hasPrevious() ? '' : 'disabled'}|">
+                  <a class="page-link" th:href="@{'/friends/my-friends?page=' + (${friendsPage.number - 1})}" th:if="${friendsPage.hasPrevious()}">Previous</a>
+                </li>
+                <li th:each="pageNum : ${#numbers.sequence(0, friendsPage.totalPages - 1)}" th:class="|page-item ${pageNum == friendsPage.number ? 'active' : ''}|">
+                  <a class="page-link" th:href="@{'/friends/my-friends?page=' + ${pageNum}}" th:text="${pageNum + 1}"></a>
+                </li>
+                <li th:class="|page-item ${friendsPage.hasNext() ? '' : 'disabled'}|">
+                  <a class="page-link" th:href="@{'/friends/my-friends?page=' + (${friendsPage.number + 1})}" th:if="${friendsPage.hasNext()}">Next</a>
+                </li>
+              </ul>
+            </nav>
           </div>
         </div>
       </div>

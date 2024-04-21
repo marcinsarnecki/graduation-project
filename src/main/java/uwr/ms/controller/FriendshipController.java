@@ -1,6 +1,9 @@
 package uwr.ms.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -89,20 +92,22 @@ public class FriendshipController {
     @PostMapping("/unblock-request")
     public String unblockRequest(@RequestParam("requestId") Long requestId, RedirectAttributes redirectAttributes) {
         try {
-            friendshipService.unblockFriendRequest(requestId); // Implement this in your service
+            friendshipService.unblockFriendRequest(requestId);
             redirectAttributes.addFlashAttribute("successMessage", "User unblocked successfully.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessages", "Failed to unblock user: " + e.getMessage());
         }
         return "redirect:/friends/requests";
     }
-
-
+    
     @GetMapping("/my-friends")
-    public String getMyFriends(Model model, Principal principal) {
+    public String getMyFriends(Model model,
+                               @RequestParam(name = "page", defaultValue = "0") int page,
+                               Principal principal) {
         String username = principal.getName();
-        List<UserEntity> friends = friendshipService.getAllFriends(username);
-        model.addAttribute("friends", friends);
+        Pageable pageable = PageRequest.of(page, 10);
+        Page<UserEntity> friendsPage = friendshipService.getFriendsPageable(username, pageable);
+        model.addAttribute("friendsPage", friendsPage);
         return "friends/my_friends";
     }
 

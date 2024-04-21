@@ -8,7 +8,7 @@
     </div>
   </a>
   <ul class="list-unstyled ps-0">
-    <li class="horizontal-separator"></li> <!-- horizontal separator-->
+    <li class="horizontal-separator"></li>
     <li class="mb-1">
       <button class=" text-color btn btn-toggle align-items-center rounded collapsed " data-bs-toggle="collapse"
               data-bs-target="#trips-collapse" aria-expanded="false">
@@ -17,8 +17,8 @@
       <div class="collapse" id="trips-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
           <li><a th:href="@{/trips/create-trip}" class="text-color rounded">New trip</a></li>
-          <li><a href="#" class="text-color rounded">My trips</a></li>
-          <li><a href="#" class="text-color rounded">Ended trips</a></li>
+          <li><a th:href="@{/trips/my-trips}" class="text-color rounded">My trips</a></li>
+          <li><a th:href="@{/trips/trip-invitations}" class="text-color rounded">Invitations</a></li>
         </ul>
       </div>
     </li>
@@ -34,14 +34,13 @@
         </ul>
       </div>
     </li>
-    <li class="horizontal-separator"></li> <!-- horizontal separator-->
+    <li class="horizontal-separator"></li>
     <li class="mb-1">
       <button class="btn btn-toggle align-items-center rounded collapsed text-color" data-bs-toggle="collapse" data-bs-target="#account-collapse" aria-expanded="false">
         Account
       </button>
       <div class="collapse" id="account-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small text-color">
-          <li><a href="#" class="text-color rounded">New...</a></li>
           <li><a th:href="@{/app-user/edit-profile}" class="text-color rounded">Edit Profile</a></li>
           <li><a href="#" class="text-color rounded">Settings</a></li>
           <li><a th:href="@{/app-user/change-password}" class="text-color rounded">Change Password</a></li>
@@ -49,7 +48,6 @@
             <a href="#" data-sec-athorize="isAuthenticated()" class="text-color rounded" data-th-attr="onclick=|$('#logout_form').submit();|">Sign out</a>
             <form id="logout_form" data-th-action="@{/logout}" method="post"></form>
           </li>
-
         </ul>
       </div>
     </li>

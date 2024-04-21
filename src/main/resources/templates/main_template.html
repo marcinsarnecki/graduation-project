@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="pl" xmlns:th="http://www.thymeleaf.org" data-th-fragment="layout(content, title)">
+<html lang="pl" xmlns:th="http://www.thymeleaf.org" data-th-fragment="layout(content, title, script, css)">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${title}">Default Title</title>
-    <script src="/js/test.js" defer></script>
     <th:block th:replace="~{fragments/bootstrap_fragment::bootstrap-head}"></th:block>
     <link href="/css/main_template.css" rel="stylesheet">
     <link href="/css/common.css" rel="stylesheet">
-
+    <link th:if="${css != null}" th:href="@{${css}}" rel="stylesheet"/>
+    <script th:if="${script != null}" th:src="@{${script}}" defer></script>
 </head>
 <body>
 <div class="left-div">

@@ -42,6 +42,9 @@ public class TripEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<TripInvitationEntity> invitations = new HashSet<>();
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -69,12 +72,20 @@ public class TripEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TripEntity that = (TripEntity) o;
-        return Objects.equals(id, that.id); // Compare only the IDs
+        return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id); // Hash only the ID
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "TripParticipantEntity{" +
+                "id=" + id +
+                " name=" + name +
+                '}';
     }
 }
 

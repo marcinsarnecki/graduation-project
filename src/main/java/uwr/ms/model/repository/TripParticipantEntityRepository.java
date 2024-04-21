@@ -1,6 +1,10 @@
 package uwr.ms.model.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import uwr.ms.constant.TripParticipantRole;
 import uwr.ms.model.entity.TripEntity;
 import uwr.ms.model.entity.TripParticipantEntity;
@@ -10,16 +14,15 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TripParticipantEntityRepository extends JpaRepository<TripParticipantEntity, Long> {
-    List<TripParticipantEntity> findByTripId(Long tripId);
-
-    List<TripParticipantEntity> findByUserUsername(String username);
+    Page<TripParticipantEntity> findByTrip(TripEntity trip, Pageable pageable);
+    List<TripParticipantEntity> findByTrip(TripEntity trip);
 
     Optional<TripParticipantEntity> findByTripAndUser(TripEntity trip, UserEntity user);
 
-    void deleteByUser(UserEntity user);
+    List<TripParticipantEntity> findByUserAndRole(UserEntity user, TripParticipantRole role);
+    @Query("SELECT DISTINCT t FROM TripParticipantEntity tp JOIN tp.trip t WHERE tp.user.username = :username")
+    List<TripEntity> findDistinctTripsByUserUsername(@Param("username") String username);
 
-    List<TripParticipantEntity> findByUserAndRole(UserEntity user, TripParticipantRole owner);
-
-    boolean existsByUserUsernameAndTripId(String test_user_username, Long id);
+    void deleteById(Long id);
 }
 

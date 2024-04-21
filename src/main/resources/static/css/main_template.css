@@ -1,12 +1,18 @@
-@import "custom-properties.css";
+:root {
+    --link-color: #212529;
+    --text-color: #212529;
+    --separator-color: #212529;
+    --hover-background-color: #d2f4ea;
+    --sidebar-background-color: rgb(242, 242, 242);
+}
 
 html {
     font-size: 1rem;
 }
 
 html, body {
-    height: 100%; /* Ensures that the root elements take full viewport height */
-    margin: 0; /* Resets any default margin */
+    height: 100%;
+    margin: 0;
 }
 
 body {
@@ -15,10 +21,10 @@ body {
 }
 
 .left-div {
-    flex: 0 0 220px; /* Fixed width for the sidebar */
+    flex: 0 0 220px;
     background-color: var(--sidebar-background-color);
-    height: 100vh; /* Full viewport height */
-    overflow-y: auto; /* Enables scrolling if content overflows */
+    height: 100vh;
+    overflow-y: auto;
 }
 
 .right-div {
@@ -33,7 +39,6 @@ body {
 
 main {
     width: 100%;
-    /*max-width: 800px; !* Adjust as needed *!*/
 }
 
 .b-example-divider {
@@ -102,7 +107,7 @@ main {
 
 .logo-img {
     max-height:100%; max-width:100%;
-    border: 2px solid #ccc; /* Adjust the border size and color as needed */
+    border: 2px solid #ccc;
 }
 
 .home-link-container {
@@ -137,8 +142,8 @@ main {
 }
 
 .alert ul {
-    padding-left: 0; /* Removes padding */
-    list-style-type: none; /* Removes the default list item markers (dots) */
+    padding-left: 0;
+    list-style-type: none;
 }
 
 
