@@ -108,7 +108,7 @@ public class TripService {
     public Set<TripParticipantEntity> findAllParticipantsByTripId(Long tripId) {
         TripEntity trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Trip ID: " + tripId));
-        return new HashSet<>(tripParticipantEntityRepository.findByTrip(trip));
+        return trip.getParticipants();
     }
 
     @Transactional
@@ -164,6 +164,7 @@ public class TripService {
         return tripInvitationRepository.findByReceiverUsername(username);
     }
 
+    @Transactional
     public void acceptInvitation(Long invitationId) {
         TripInvitationEntity invitation = tripInvitationRepository.findById(invitationId)
                 .orElseThrow(() -> new IllegalArgumentException("Invitation not found"));
@@ -178,7 +179,8 @@ public class TripService {
         participant.setTrip(trip);
         participant.setUser(user);
         participant.setRole(TripParticipantRole.MEMBER);
-        tripParticipantEntityRepository.save(participant);
+        trip.getParticipants().add(participant);
+        tripRepository.save(trip);
         tripInvitationRepository.delete(invitation);
     }
 
