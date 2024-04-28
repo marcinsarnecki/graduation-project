@@ -50,7 +50,7 @@ public class FriendshipController {
     public String getRequests(Model model, Principal principal) {
         String username = principal.getName();
         List<FriendshipEntity> friendRequests = friendshipService.listReceivedFriendRequests(username);
-        List<FriendshipEntity> blockedRequests = friendshipService.listBlockedFriendRequests(username); // Assume this method exists
+        List<FriendshipEntity> blockedRequests = friendshipService.listBlockedFriendRequests(username);
         model.addAttribute("friendRequests", friendRequests);
         model.addAttribute("blockedRequests", blockedRequests);
         return "friends/requests";

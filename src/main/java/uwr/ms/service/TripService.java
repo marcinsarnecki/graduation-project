@@ -42,12 +42,12 @@ public class TripService {
         UserEntity owner = userRepository.findByUsername(ownerUsername)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        if (tripRepository.existsByNameAndOwnerUsername(trip.getName(), ownerUsername)) { //todo
+        if (tripRepository.existsByNameAndOwnerUsername(trip.getName(), ownerUsername)) {
             throw new IllegalStateException("You already have a trip with the same name");
         }
         TripParticipantEntity ownerParticipant = new TripParticipantEntity();
         ownerParticipant.setUser(owner);
-        ownerParticipant.setRole(TripParticipantRole.OWNER); // Assuming you have this enum defined
+        ownerParticipant.setRole(TripParticipantRole.OWNER);
         trip.addParticipant(ownerParticipant);
         tripRepository.save(trip);
     }
