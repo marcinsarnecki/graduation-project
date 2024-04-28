@@ -33,7 +33,7 @@ public class AppUserController { //TODO "/error" mapping
     }
 
     @PostMapping("/signup")
-    public String postSignUp(@Valid SignUpRequest signUpRequest, RedirectAttributes redirectAttributes) {
+    public String signUp(@Valid SignUpRequest signUpRequest, RedirectAttributes redirectAttributes) {
         try {
             appUserService.createUser(AppUser.builder()
                     .username(signUpRequest.username())
@@ -61,7 +61,7 @@ public class AppUserController { //TODO "/error" mapping
     }
 
     @PostMapping("/change-password")
-    public String postChangePassword(@Valid AppUserController.ChangePasswordRequest changePasswordRequest, RedirectAttributes redirectAttributes) {
+    public String changePassword(@Valid AppUserController.ChangePasswordRequest changePasswordRequest, RedirectAttributes redirectAttributes) {
         try {
             appUserService.validateAndChangePassword(changePasswordRequest);
             redirectAttributes.addFlashAttribute("successMessage", "Password successfully changed");
@@ -87,7 +87,7 @@ public class AppUserController { //TODO "/error" mapping
     }
 
     @PostMapping("/edit-profile")
-    public String postEditProfile(@ModelAttribute EditProfileRequest editProfileRequest, RedirectAttributes redirectAttributes) {
+    public String editProfile(@ModelAttribute EditProfileRequest editProfileRequest, RedirectAttributes redirectAttributes) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         try {
             appUserService.updateUserProfile(username, editProfileRequest);

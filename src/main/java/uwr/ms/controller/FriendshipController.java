@@ -35,7 +35,7 @@ public class FriendshipController {
     }
 
     @PostMapping("/add-friend")
-    public String postAddFriend(@RequestParam("username") String friendUsername, Principal principal, RedirectAttributes redirectAttributes) {
+    public String addFriend(@RequestParam("username") String friendUsername, Principal principal, RedirectAttributes redirectAttributes) {
         String requesterUsername = principal.getName();
         try {
             friendshipService.sendFriendRequest(requesterUsername, friendUsername);
@@ -57,7 +57,7 @@ public class FriendshipController {
     }
 
     @PostMapping("/accept-request")
-    public String postAcceptFriendRequest(@RequestParam("requestId") Long requestId, RedirectAttributes redirectAttributes) {
+    public String acceptFriendRequest(@RequestParam("requestId") Long requestId, RedirectAttributes redirectAttributes) {
         try {
             friendshipService.acceptFriendRequest(requestId);
             redirectAttributes.addFlashAttribute("successMessage", "Friend request accepted successfully!");
@@ -68,7 +68,7 @@ public class FriendshipController {
     }
 
     @PostMapping("/decline-request")
-    public String postDeclineFriendRequest(@RequestParam("requestId") Long requestId, RedirectAttributes redirectAttributes) {
+    public String declineFriendRequest(@RequestParam("requestId") Long requestId, RedirectAttributes redirectAttributes) {
         try {
             friendshipService.declineFriendRequest(requestId);
             redirectAttributes.addFlashAttribute("successMessage", "Friend request declined.");
@@ -79,7 +79,7 @@ public class FriendshipController {
     }
 
     @PostMapping("/block-request")
-    public String postBlockFriendRequest(@RequestParam("requestId") Long requestId, RedirectAttributes redirectAttributes) {
+    public String blockFriendRequest(@RequestParam("requestId") Long requestId, RedirectAttributes redirectAttributes) {
         try {
             friendshipService.blockFriendRequest(requestId);
             redirectAttributes.addFlashAttribute("successMessage", "Friend request declined.");
