@@ -1,0 +1,17 @@
+.zoom-control {
+    display: none;
+}
+
+.card-body {
+    overflow: hidden;
+}
+
+.map-preview-header {
+    text-align: center;
+    width: 100%;
+}
+
+.scrollable-content {
+    overflow-y: auto;
+    max-height: 40.6rem;
+}

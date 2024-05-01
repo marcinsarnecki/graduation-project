@@ -1,22 +1,17 @@
 package uwr.ms.service;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import uwr.ms.constant.EventType;
 import uwr.ms.constant.TripParticipantRole;
 import uwr.ms.dto.TripDTO;
-import uwr.ms.model.entity.TripEntity;
-import uwr.ms.model.entity.TripInvitationEntity;
-import uwr.ms.model.entity.TripParticipantEntity;
-import uwr.ms.model.entity.UserEntity;
-import uwr.ms.model.repository.TripEntityRepository;
-import uwr.ms.model.repository.TripInvitationRepository;
-import uwr.ms.model.repository.TripParticipantEntityRepository;
-import uwr.ms.model.repository.UserEntityRepository;
+import uwr.ms.model.entity.*;
+import uwr.ms.model.repository.*;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -28,13 +23,15 @@ public class TripService {
     private final UserEntityRepository userRepository;
     private final TripParticipantEntityRepository tripParticipantEntityRepository;
     private final TripInvitationRepository tripInvitationRepository;
+    private final EventEntityRepository eventEntityRepository;
 
     @Autowired
-    public TripService(TripEntityRepository tripRepository, UserEntityRepository userRepository, TripParticipantEntityRepository tripParticipantEntityRepository, TripInvitationRepository tripInvitationRepository) {
+    public TripService(TripEntityRepository tripRepository, UserEntityRepository userRepository, TripParticipantEntityRepository tripParticipantEntityRepository, TripInvitationRepository tripInvitationRepository, EventEntityRepository eventEntityRepository) {
         this.tripRepository = tripRepository;
         this.userRepository = userRepository;
         this.tripParticipantEntityRepository = tripParticipantEntityRepository;
         this.tripInvitationRepository = tripInvitationRepository;
+        this.eventEntityRepository = eventEntityRepository;
     }
 
     @Transactional
@@ -188,6 +185,45 @@ public class TripService {
         TripInvitationEntity invitation = tripInvitationRepository.findById(invitationId)
                 .orElseThrow(() -> new IllegalArgumentException("Invitation not found"));
         tripInvitationRepository.delete(invitation);
+    }
+
+    @Transactional
+    public void addEventToTrip(EventEntity event, TripEntity trip) {
+        if (event.getTime() == null || event.getDate() == null)
+            throw new IllegalArgumentException("Invalid date and time");
+        if (event.getEventType().equals(EventType.SINGLE) && (event.getLocation() == null || event.getLocation().isEmpty()))
+            throw new IllegalArgumentException("Invalid location");
+        if (event.getEventType().equals(EventType.ROUTE) &&
+                (event.getOrigin() == null ||
+                        event.getOrigin().isEmpty() ||
+                        event.getDestination() == null ||
+                        event.getDestination().isEmpty()))
+            throw new IllegalArgumentException("Invalid origin and destination");
+        if (event.getEventType() == EventType.SINGLE) {
+            event.setOrigin(null);
+            event.setDestination(null);
+            event.setTravelMode(null);
+        } else if (event.getEventType() == EventType.ROUTE) {
+            event.setLocation(null);
+        }
+        eventEntityRepository.save(event);
+        trip.getEvents().add(event);
+        event.setTrip(trip);
+        tripRepository.save(trip);
+    }
+
+    @Transactional
+    public void deleteEvent(Long tripId, Long eventId, String username) {
+        TripEntity trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new IllegalArgumentException("Trip not found"));
+        if (!isUserOwner(trip, username))
+            throw new AccessDeniedException("You do not have permission to edit this trip");
+        EventEntity event = eventEntityRepository.findById(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("Event not found"));
+        if (!event.getTrip().getId().equals(tripId))
+            throw new IllegalArgumentException("Event does not belong to the specified trip");
+        trip.getEvents().removeIf(e -> e.getId().equals(eventId));
+        eventEntityRepository.delete(event);
     }
 }
 

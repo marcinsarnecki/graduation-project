@@ -7,7 +7,7 @@
                     <div class="card-body">
                         <h5 class="card-title text-center">My Trips</h5>
                         <ul class="list-group list-group-flush">
-                            <li class="list-group-item d-flex justify-content-between align-items-center" data-th-each="trip : ${trips}">
+                            <li class="list-group-item d-flex justify-content-between align-items-center" data-th-each="trip : ${trips}"> //todo pagination
                                 <div class="trip-info">
                                     <span data-th-text="${trip.name}"></span> (<span data-th-text="${trip.startDate}"></span>)
                                 </div>

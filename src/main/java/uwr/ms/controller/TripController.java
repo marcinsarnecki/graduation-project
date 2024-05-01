@@ -1,6 +1,7 @@
 package uwr.ms.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -11,19 +12,21 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import uwr.ms.dto.TripDTO;
-import uwr.ms.model.entity.TripEntity;
-import uwr.ms.model.entity.TripInvitationEntity;
-import uwr.ms.model.entity.TripParticipantEntity;
-import uwr.ms.model.entity.UserEntity;
+import uwr.ms.model.entity.*;
 import uwr.ms.service.FriendshipService;
 import uwr.ms.service.TripService;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/trips")
 public class TripController {
+    @Value("${GOOGLE_MAPS_API_KEY}")
+    private String googleMapsApiKey;
 
     private final TripService tripService;
     private final FriendshipService friendshipService;
@@ -66,13 +69,16 @@ public class TripController {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid trip Id:" + id));
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         if(!tripService.isUserOwner(trip.getId(), username))
-            throw new AccessDeniedException("You do not have permission to edit this trip.");
+            throw new AccessDeniedException("You do not have permission to edit this trip.");//todo another page for error
         model.addAttribute("trip", trip);
         return "trips/edit_trip";
     }
 
     @PostMapping("/update/{id}")
     public String updateTrip(@PathVariable("id") Long id, @ModelAttribute("trip") TripEntity trip, RedirectAttributes redirectAttributes) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if(!tripService.isUserOwner(trip.getId(), username))
+            throw new AccessDeniedException("You do not have permission to edit this trip.");
         tripService.updateTrip(id, trip);
         redirectAttributes.addFlashAttribute("successMessage", "Trip updated successfully!");
         return "redirect:/trips/my-trips";
@@ -151,5 +157,81 @@ public class TripController {
         return "redirect:/trips/trip-invitations";
     }
 
+    @GetMapping("/view/{id}")
+    public String getViewTrip(@PathVariable("id") Long id, Model model) {
+        TripEntity trip = tripService.findTripById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid trip Id:" + id));
+        model.addAttribute("trip", trip);
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd MMMM yyyy");
+        model.addAttribute("formattedStartDate", trip.getStartDate().format(dateFormatter));
+
+        Set<String> potentialFriendsUsernames = friendshipService
+                .getAllPotentialFriendsAmongTripParticipants(trip.getId(), username)
+                .stream()
+                .map(UserEntity::getUsername)
+                .collect(Collectors.toSet());
+        List<ParticipantDTO> participantDTOs = tripService.findAllParticipantsByTripId(trip.getId()).stream()
+                .map(p -> new ParticipantDTO(p.getUser().getUsername(), p.getUser().getName(), potentialFriendsUsernames.contains(p.getUser().getUsername()))).toList();
+
+        model.addAttribute("participants", participantDTOs);
+        model.addAttribute("events", getEventsSortedByDateAndTime(trip.getEvents()));
+        model.addAttribute("googleMapsApiKey", googleMapsApiKey);
+        return "trips/view_trip";
+    }
+
+    @GetMapping("/manage-events/{tripId}")
+    public String manageEvents(@PathVariable Long tripId, Model model) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (!tripService.isUserOwner(tripId, username))
+            throw new AccessDeniedException("You do not have permission to edit this trip.");
+        TripEntity trip = tripService.findTripById(tripId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid trip Id:" + tripId));
+        model.addAttribute("trip", trip);
+        model.addAttribute("events", getEventsSortedByDateAndTime(trip.getEvents()));
+        model.addAttribute("googleMapsApiKey", googleMapsApiKey);
+        return "trips/manage_events";
+    }
+
+    @PostMapping("/manage-events/{tripId}/save")
+    public String saveEvent(@ModelAttribute("event") EventEntity event, @PathVariable Long tripId, RedirectAttributes redirectAttributes) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        TripEntity trip = tripService.findTripById(tripId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid trip Id:" + tripId));
+        if (!tripService.isUserOwner(tripId, username))
+            throw new AccessDeniedException("You do not have permission to edit this trip");
+        if(event.getDate() == null || event.getTime() == null)
+            throw new IllegalArgumentException("Enter proper date and time");
+
+        try {
+            tripService.addEventToTrip(event, trip);
+            redirectAttributes.addFlashAttribute("successMessage", "Event saved successfully!");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessages", e.getMessage());
+        }
+        return "redirect:/trips/manage-events/" + tripId;
+    }
+
+    private List<EventEntity> getEventsSortedByDateAndTime(List<EventEntity> events) {
+        return events.stream()
+                .sorted(Comparator.comparing(EventEntity::getDate)
+                        .thenComparing(EventEntity::getTime))
+                .collect(Collectors.toList());
+    }
+
+    @PostMapping("/{tripId}/delete-event/{eventId}")
+    public String deleteEvent(@PathVariable Long tripId, @PathVariable Long eventId, RedirectAttributes redirectAttributes) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            tripService.deleteEvent(tripId, eventId, username);
+            redirectAttributes.addFlashAttribute("successMessage", "Event deleted successfully!");
+            return "redirect:/trips/manage-events/" + tripId;
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessages", e.getMessage());
+            return "redirect:/error"; //todo /error mapping
+        }
+    }
+
+    public record ParticipantDTO(String username, String name, boolean isPotentialFriend) {}
 }
 

@@ -9,6 +9,7 @@
     <link href="/css/common.css" rel="stylesheet">
     <link th:if="${css != null}" th:href="@{${css}}" rel="stylesheet"/>
     <script th:if="${script != null}" th:src="@{${script}}" defer></script>
+    <meta name="csrf-token" th:content="${_csrf.token}"/>
 </head>
 <body>
 <div class="left-div">

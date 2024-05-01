@@ -93,14 +93,11 @@ public class FriendshipService {
     @Transactional(readOnly = true)
     public List<UserEntity> getAllFriends(String username) {
         return userEntityRepository.findFriendsByUsername(username);
-//        List<UserEntity> friends = new ArrayList<>();
-//        friendshipRepository.findByRequesterUsernameAndStatus(username, FriendshipStatus.ACCEPTED).forEach(friendshipEntity -> {
-//            friends.add(friendshipEntity.getAddressee());
-//        });
-//        friendshipRepository.findByAddresseeUsernameAndStatus(username, FriendshipStatus.ACCEPTED).forEach(friendshipEntity -> {
-//            friends.add(friendshipEntity.getRequester());
-//        });
-//        return friends;
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserEntity> getAllPotentialFriendsAmongTripParticipants(Long tripId, String username) {
+        return userEntityRepository.findPotentialFriendsAmongParticipants(tripId, username);
     }
 
     public Page<UserEntity> getFriendsPageable(String username, Pageable pageable) {

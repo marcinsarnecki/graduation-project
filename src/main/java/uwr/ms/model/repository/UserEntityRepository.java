@@ -25,4 +25,12 @@ public interface UserEntityRepository extends JpaRepository<UserEntity, String> 
             "OR u.username IN " +
             " (SELECT f.requester.username FROM FriendshipEntity f WHERE f.addressee.username = :username AND f.status = 'ACCEPTED')")
     List<UserEntity> findFriendsByUsername(@Param("username") String username);
+
+    @Query("SELECT p.user FROM TripParticipantEntity p WHERE p.trip.id = :tripId AND NOT p.user.username = :username " +
+            "AND p.user.username NOT IN (" +
+            "SELECT f.addressee.username FROM FriendshipEntity f WHERE f.requester.username = :username" +
+            ") AND p.user.username NOT IN (" +
+            "SELECT f.requester.username FROM FriendshipEntity f WHERE f.addressee.username = :username" +
+            ")")
+    List<UserEntity> findPotentialFriendsAmongParticipants(@Param("tripId") Long tripId, @Param("username") String username);
 }

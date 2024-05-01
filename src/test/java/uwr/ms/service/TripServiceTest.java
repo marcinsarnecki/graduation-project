@@ -4,24 +4,30 @@ import static org.assertj.core.api.Assertions.*;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import uwr.ms.constant.EventType;
 import uwr.ms.constant.LoginProvider;
+import uwr.ms.model.entity.EventEntity;
 import uwr.ms.model.entity.TripEntity;
 import uwr.ms.model.entity.TripParticipantEntity;
 import uwr.ms.model.entity.UserEntity;
-import uwr.ms.model.repository.TripEntityRepository;
-import uwr.ms.model.repository.TripInvitationRepository;
-import uwr.ms.model.repository.TripParticipantEntityRepository;
-import uwr.ms.model.repository.UserEntityRepository;
+import uwr.ms.model.repository.*;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.stream.Stream;
 
 @SpringBootTest
 @Transactional
@@ -45,6 +51,9 @@ public class TripServiceTest {
     @Autowired
     private TripInvitationRepository tripInvitationRepository;
 
+    @Autowired
+    private EventEntityRepository eventEntityRepository;
+
     private UserEntity owner, user1, user2;
 
     @BeforeEach
@@ -53,6 +62,23 @@ public class TripServiceTest {
         user1 = new UserEntity("user1", "Password2", "user1@example.com", "User One", LoginProvider.APP, "");
         user2 = new UserEntity("user2", "Password3", "user2@example.com", "User Two", LoginProvider.APP, "");
         userRepository.saveAll(Arrays.asList(owner, user1, user2));
+    }
+
+    private TripEntity setupTripWithEvent() {
+        TripEntity trip = new TripEntity();
+        trip.setName("Diving Trip");
+        tripService.createTrip(trip, owner.getUsername());
+
+        EventEntity event = new EventEntity();
+        event.setEventName("New Year Party");
+        event.setEventType(EventType.SINGLE);
+        event.setLocation("Warsaw");
+        event.setZoom(10);
+        event.setDate(LocalDate.of(2024, 1, 1));
+        event.setTime(LocalTime.of(23, 59));
+        tripService.addEventToTrip(event, trip);
+
+        return trip;
     }
 
     @Test
@@ -167,4 +193,69 @@ public class TripServiceTest {
                 .hasMessageContaining("You do not have permission to remove participants from this trip");
     }
 
+    @Test
+    void addSingleLocationEventSuccessfully() {
+        TripEntity trip = new TripEntity();
+        trip.setId(1L);
+        trip.setName("New Year Trip");
+        tripService.createTrip(trip, owner.getUsername());
+
+        EventEntity event = new EventEntity();
+        event.setId(1L);
+        event.setEventName("New Year Party");
+        event.setEventType(EventType.SINGLE);
+        event.setLocation("Warsaw");
+        event.setZoom(10);
+        event.setDate(LocalDate.of(2024, 1, 1));
+        event.setTime(LocalTime.of(23, 59));
+
+        tripService.addEventToTrip(event, trip);
+
+        assertThat(trip.getEvents()).hasSize(1);
+        assertThat(trip.getEvents().iterator().next().getLocation()).isEqualTo("Warsaw");
+        assertThat(trip.getEvents().iterator().next().getOrigin()).isNull();
+    }
+
+    @Test
+    public void deleteEventSuccessfully() {
+        TripEntity trip = setupTripWithEvent();
+        EventEntity event = trip.getEvents().iterator().next();
+        tripService.deleteEvent(trip.getId(), event.getId(), owner.getUsername());
+        Assertions.assertTrue(eventEntityRepository.findById(event.getId()).isEmpty());
+    }
+    @Test
+    public void deleteNonExistingEventThrowsIllegalStateException() {
+        TripEntity trip = setupTripWithEvent();
+        assertThatThrownBy(() -> {
+            tripService.deleteEvent(trip.getId(), 999999L, owner.getUsername());
+        }).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Event not found");
+    }
+
+    @Test
+    public void deleteEventInNonExistingTripThrowsIllegalStateException() {
+        TripEntity trip = setupTripWithEvent();
+        assertThatThrownBy(() -> {
+            tripService.deleteEvent(2L, 1L, owner.getUsername());
+        }).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Trip not found");
+    }
+
+    @Test
+    public void deleteEventByNonOwnerThrowsAccessDeniedException() {
+        TripEntity trip = setupTripWithEvent();
+        assertThatThrownBy(() -> {
+            tripService.deleteEvent(trip.getId(), 1L, user1.getUsername());
+        }).isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("You do not have permission to edit this trip");
+    }
+
+    @Test
+    public void creatingTripWithTheSameNameThrowsIllegalStateException() {
+        TripEntity trip1 = setupTripWithEvent();
+        assertThatThrownBy(() -> {
+            TripEntity trip2 = setupTripWithEvent();
+        }).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("You already have a trip with the same name");
+    }
 }

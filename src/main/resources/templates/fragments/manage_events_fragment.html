@@ -1,0 +1,152 @@
+<div data-th-fragment="content">
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <th:block
+                        th:replace="~{fragments/alert_message_fragment::alertMessages(${errorMessages}, ${successMessage})}"></th:block>
+
+                <ul class="nav nav-tabs justify-content-center mb-4">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-toggle="tab" href="#editEvents">Edit Events</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#addEvent">Add New Event</a>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <div id="editEvents" class="tab-pane fade show active col-md-6 offset-md-3">
+                        <div class="card">
+                            <div class="card-header text-center">
+                                <h5 th:text="${trip.name} + ' Events'">Trip Events</h5>
+                            </div>
+                            <div class="card-body scrollable-content">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item" th:each="event : ${events}" th:if="!${#lists.isEmpty(events)}">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 th:text="${event.eventName}">Event Name</h6>
+                                                <small th:text="${event.date} + ' at ' + ${event.time}">Date and Time</small>
+                                            </div>
+                                            <form th:action="@{|/trips/${trip.id}/delete-event/${event.id}|}" method="post" class="ml-auto">
+                                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                            </form>
+                                        </div>
+                                    </li>
+                                    <li class="list-group-item text-center" th:if="${#lists.isEmpty(events)}">
+                                        No events added yet.
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="addEvent" class="tab-pane fade">
+                        <div class="card">
+                            <div class="card-body row">
+                                <div class="col-md-4 mt-2">
+                                    <form id="eventForm" data-th-action="@{|/trips/manage-events/${trip.id}/save|}" method="post"
+                                          data-th-object="${event}">
+                                        <div>
+                                            <label for="eventName">Event Name:</label>
+                                            <input type="text" class="form-control" id="eventName" name="eventName" required>
+                                        </div>
+
+                                        <div>
+                                            <label>Event Type:</label>
+                                            <div class="form-check">
+                                                <input type="radio" class="form-check-input" id="singlePlace"
+                                                       name="eventType" value="SINGLE" checked
+                                                       onchange="toggleRouteFields()">
+                                                <label class="form-check-label" for="singlePlace">Single Place</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="radio" class="form-check-input" id="route"
+                                                       name="eventType" value="ROUTE" onchange="toggleRouteFields()">
+                                                <label class="form-check-label" for="route">Route</label>
+                                            </div>
+                                        </div>
+
+                                        <div id="locationField" class="form-group">
+                                            <label for="location">Location:</label>
+                                            <input type="text" class="form-control" id="location" name="location" required>
+                                        </div>
+
+                                        <div id="routeFields" style="display: none;">
+                                            <div class="form-group">
+                                                <label for="origin">Origin:</label>
+                                                <input type="text" class="form-control" id="origin" name="origin">
+                                            </div>
+
+                                            <div>
+                                                <label for="destination">Destination:</label>
+                                                <input type="text" class="form-control" id="destination"
+                                                       name="destination">
+                                            </div>
+
+                                            <div>
+                                                <label for="travelMode">Travel Mode:</label>
+                                                <select class="form-control" id="travelMode" name="travelMode">
+                                                    <option value="DRIVING">Driving</option>
+                                                    <option value="WALKING">Walking</option>
+                                                    <option value="BICYCLING">Bicycling</option>
+                                                    <option value="TRANSIT">Transit</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-center mt-2">
+                                            <button type="button" class="btn btn-primary" onclick="loadMapPreview()">
+                                                Load Map Preview
+                                            </button>
+                                        </div>
+
+                                        <div id="zoomControlDiv" class="text-center mt-2 mb-2">
+                                            <label for="zoomControl">Zoom Level:</label>
+                                            <input type="range" id="zoomControl" name="zoom" min="1" max="18" value="12"
+                                                   step="1" onchange="adjustZoom()" disabled>
+                                        </div>
+
+                                        <div class="d-flex justify-content-between">
+                                            <div class="w-50 mr-2">
+                                                <label for="date">Date:</label>
+                                                <input type="date" class="form-control" id="date" name="date" required>
+                                            </div>
+
+                                            <div class="w-50">
+                                                <label for="time">Time:</label>
+                                                <input type="time" class="form-control" id="time" name="time" required>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label for="description">Description:</label>
+                                            <textarea class="form-control" id="description" name="description"
+                                                      rows="4"></textarea>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <div class="col-md-8">
+                                    <h5 class="text-center">Map Preview</h5>
+                                    <div id="initialText"
+                                         style="width: 100%; height: 36.3rem; line-height: 36.3rem; text-align: center; border: 1px solid #ccc;">
+                                        Enter location and press 'Load Map Preview'
+                                    </div>
+                                    <div id="mapPreview" style="width: 100%; height: 36.3rem; display: none;"
+                                         th:data-api-key="${googleMapsApiKey}"></div>
+                                </div>
+                            </div>
+                            <div class="text-center mb-3">
+                                <button id="eventFormSubmitBtn" type="submit" class="btn btn-primary">Add New
+                                    Event
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>

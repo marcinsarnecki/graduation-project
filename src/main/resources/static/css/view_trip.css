@@ -1,0 +1,31 @@
+#map {
+    height: 600px;
+}
+
+#mapContainer {
+    width: 100%;
+    margin: auto;
+    height: 40.6rem;
+}
+
+.event-link.selected {
+    background-color: #e9ecef;
+    color: #007bff;
+}
+
+.event-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+.scrollable-content {
+    max-height: 40.6rem;
+    overflow-y: auto;
+}
+
+#eventList {
+    max-height: 40.6rem;
+    overflow-y: auto;
+}
+

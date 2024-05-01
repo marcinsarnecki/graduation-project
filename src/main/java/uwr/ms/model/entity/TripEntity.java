@@ -6,9 +6,7 @@ import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import jakarta.persistence.*;
 
@@ -44,6 +42,9 @@ public class TripEntity {
 
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<TripInvitationEntity> invitations = new HashSet<>();
+
+    @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<EventEntity> events = new ArrayList<>();;
 
     @PrePersist
     protected void onCreate() {

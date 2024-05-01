@@ -1,0 +1,138 @@
+<div data-th-fragment="content">
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-12">
+                <ul class="nav nav-tabs justify-content-center mb-4">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-toggle="tab" href="#tripInfo">Trip Info</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#participants">Participants</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#events">Events</a>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <div id="tripInfo" class="tab-pane fade col-md-6 offset-md-3 show active">
+                        <div class="card">
+                            <div class="card-header text-center d-flex align-items-center justify-content-center">
+                                <h5 th:text="${trip.name}">Trip Name</h5>
+                            </div>
+                            <div class="card-body scrollable-content">
+                                <div class="card mb-2">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Location</h6>
+                                        <p class="card-text" th:text="${trip.location}">Location</p>
+                                    </div>
+                                </div>
+                                <div class="card mb-2">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Start Date</h6>
+                                        <p class="card-text" th:text="${formattedStartDate}">Start Date</p>
+                                    </div>
+                                </div>
+                                <div class="card mb-2">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Description</h6>
+                                        <p class="card-text" th:text="${trip.description}">Trip Description</p>
+                                    </div>
+                                </div>
+                                <div class="card mb-2">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Number of Participants</h6>
+                                        <p class="card-text" th:text="${participants.size()}">Number of Participants</p>
+                                    </div>
+                                </div>
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Number of Events</h6>
+                                        <p class="card-text" th:text="${events.size()}">Number of Events</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="participants" class="tab-pane fade col-md-6 offset-md-3">
+                        <div class="card">
+                            <div class="card-header text-center d-flex align-items-center justify-content-center">
+                                <h5>Participants</h5>
+                            </div>
+                            <div class="card-body scrollable-content">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center"
+                                        th:each="participant : ${participants}">
+                                        <span th:text="${participant.name} + (${participant.name} != ${participant.username} ? ' (' + ${participant.username} + ')' : '')">Username</span>
+                                        <button type="button" th:if="${participant.isPotentialFriend}"
+                                                th:attr="onclick='sendFriendRequest(\'' + ${participant.username} + '\', event)'"
+                                                class="btn btn-primary btn-sm">
+                                            Send friend request
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="events" class="tab-pane fade">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="text-center">Events List</h5>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <ul class="list-group list-group-flush" id="eventList">
+                                            <li class="list-group-item" th:each="event : ${events}"
+                                                th:if="!${#lists.isEmpty(events)}">
+                                                <a href="#" class="event-link"
+                                                   th:data-event-name="${event.eventName}"
+                                                   th:data-event-type="${event.eventType}"
+                                                   th:data-location="${event.location}"
+                                                   th:data-origin="${event.origin}"
+                                                   th:data-destination="${event.destination}"
+                                                   th:data-travel-mode="${event.travelMode}"
+                                                   th:data-zoom="${event.zoom}">
+                                                    <h6 th:text="${event.eventName}">Event Name</h6>
+                                                    <small th:text="${event.date} + ' at ' + ${event.time}">Date and
+                                                        Time</small>
+                                                </a>
+                                            </li>
+                                            <li class="list-group-item text-center" th:if="${#lists.isEmpty(events)}">
+                                                No events added yet.
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="text-center">Map</h5>
+                                    </div>
+                                    <div id="mapContainer" th:data-api-key="${googleMapsApiKey}"
+                                         class="map-container"></div>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-12">
+                                    <div class="text-center">
+                                        <button id="startSlideshowBtn" class="btn btn-success">Start Slideshow</button>
+                                        <button id="pauseSlideshowBtn" class="btn btn-danger" disabled="true">Pause Slideshow</button>
+                                        <div class="mt-2">
+                                            <label for="slideshowSpeed">Slideshow Speed:</label>
+                                            <input type="range" id="slideshowSpeed" min="3" max="10" value="5">
+                                            <span id="speedDisplay">5 sec</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
