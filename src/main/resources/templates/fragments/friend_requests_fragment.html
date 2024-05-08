@@ -1,11 +1,13 @@
 <div data-th-fragment="content">
-    <div class="container mt-4">
+    <div class="container mt-3">
         <div class="row justify-content-center">
             <div class="col-md-6 col-lg-4">
                 <th:block th:replace="~{fragments/alert_message_fragment::alertMessages(${errorMessages}, ${successMessage})}"></th:block>
                 <div class="card">
+                    <div class="card-header d-flex align-items-center justify-content-center" style="padding: 1rem;">
+                        <h5 class="mb-0">Friend Requests</h5>
+                    </div>
                     <div class="card-body">
-                        <h5 class="card-title text-center">Friend Requests</h5>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item d-flex justify-content-between align-items-center" data-th-each="request : ${friendRequests}">
                                 <span data-th-text="${request.requester.username}"></span>

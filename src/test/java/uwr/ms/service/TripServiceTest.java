@@ -2,14 +2,9 @@ package uwr.ms.service;
 
 import static org.assertj.core.api.Assertions.*;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.access.AccessDeniedException;
@@ -26,15 +21,14 @@ import uwr.ms.model.repository.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 @SpringBootTest
 @Transactional
 @ActiveProfiles("postgres")
 public class TripServiceTest {
-    @PersistenceContext
-    private EntityManager entityManager;
 
     @Autowired
     private TripService tripService;
@@ -64,20 +58,24 @@ public class TripServiceTest {
         userRepository.saveAll(Arrays.asList(owner, user1, user2));
     }
 
+    private EventEntity createEvent(String name, String location, LocalDate date, LocalTime time) {
+        EventEntity event = new EventEntity();
+        event.setEventName(name);
+        event.setEventType(EventType.SINGLE);
+        event.setLocation(location);
+        event.setZoom(10);
+        event.setDate(date);
+        event.setTime(time);
+        return event;
+    }
+
     private TripEntity setupTripWithEvent() {
         TripEntity trip = new TripEntity();
         trip.setName("Diving Trip");
         tripService.createTrip(trip, owner.getUsername());
 
-        EventEntity event = new EventEntity();
-        event.setEventName("New Year Party");
-        event.setEventType(EventType.SINGLE);
-        event.setLocation("Warsaw");
-        event.setZoom(10);
-        event.setDate(LocalDate.of(2024, 1, 1));
-        event.setTime(LocalTime.of(23, 59));
+        EventEntity event = createEvent("New Year Party", "Warsaw", LocalDate.of(2024, 1, 1), LocalTime.of(23, 59));
         tripService.addEventToTrip(event, trip);
-
         return trip;
     }
 
@@ -236,7 +234,7 @@ public class TripServiceTest {
     public void deleteEventInNonExistingTripThrowsIllegalStateException() {
         TripEntity trip = setupTripWithEvent();
         assertThatThrownBy(() -> {
-            tripService.deleteEvent(2L, 1L, owner.getUsername());
+            tripService.deleteEvent(trip.getId() + 1, 1L, owner.getUsername());
         }).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Trip not found");
     }
@@ -257,5 +255,34 @@ public class TripServiceTest {
             TripEntity trip2 = setupTripWithEvent();
         }).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("You already have a trip with the same name");
+    }
+
+    @Test
+    void addAndDeleteMultipleEventsSuccessfully() {
+        TripEntity trip = new TripEntity();
+        trip.setName("Festival Trip");
+        tripService.createTrip(trip, owner.getUsername());
+
+        EventEntity event1 = createEvent("Event 1", "Cracow", LocalDate.of(2023, 10, 10), LocalTime.of(10, 0));
+        EventEntity event2 = createEvent("Event 2", "Cracow", LocalDate.of(2023, 10, 11), LocalTime.of(15, 0));
+        EventEntity event3 = createEvent("Event 3", "Cracow", LocalDate.of(2023, 10, 12), LocalTime.of(20, 0));
+        EventEntity event4 = createEvent("Event 4", "Cracow", LocalDate.of(2023, 10, 13), LocalTime.of(18, 0));
+
+        tripService.addEventToTrip(event1, trip);
+        tripService.addEventToTrip(event2, trip);
+        tripService.addEventToTrip(event3, trip);
+        tripService.addEventToTrip(event4, trip);
+
+        trip = tripRepository.findById(trip.getId()).orElseThrow();
+        assertThat(trip.getEvents()).hasSize(4);
+
+        tripService.deleteEvent(trip.getId(), event2.getId(), owner.getUsername());
+        tripService.deleteEvent(trip.getId(), event4.getId(), owner.getUsername());
+
+        trip = tripRepository.findById(trip.getId()).orElseThrow();
+        List<String> remainingEventNames = trip.getEvents().stream().map(EventEntity::getEventName).collect(Collectors.toList());
+
+        assertThat(remainingEventNames).containsExactlyInAnyOrder("Event 1", "Event 3");
+        assertThat(remainingEventNames).doesNotContain("Event 2", "Event 4");
     }
 }

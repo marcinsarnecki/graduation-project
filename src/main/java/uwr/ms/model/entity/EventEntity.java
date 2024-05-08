@@ -41,9 +41,6 @@ public class EventEntity {
     private LocalDate date;
     private LocalTime time;
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
-
     @ManyToOne
     @JoinColumn(name = "trip_id")
     private TripEntity trip;

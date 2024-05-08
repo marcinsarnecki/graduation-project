@@ -83,8 +83,6 @@ function showEventOnMap(anchor) {
     const travelMode = anchor.getAttribute('data-travel-mode');
     const zoomLevel = parseInt(anchor.getAttribute('data-zoom'), 10);
 
-    console.log('Event Details:', eventName, eventType, location, origin, destination, travelMode, zoomLevel);
-
     const mapContainer = document.getElementById('mapContainer');
     mapPreview = new google.maps.Map(mapContainer, {
         center: { lat: 0, lng: 0 },

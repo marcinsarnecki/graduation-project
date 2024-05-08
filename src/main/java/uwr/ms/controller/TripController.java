@@ -16,6 +16,7 @@ import uwr.ms.model.entity.*;
 import uwr.ms.service.FriendshipService;
 import uwr.ms.service.TripService;
 
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
@@ -71,6 +72,11 @@ public class TripController {
         if(!tripService.isUserOwner(trip.getId(), username))
             throw new AccessDeniedException("You do not have permission to edit this trip.");//todo another page for error
         model.addAttribute("trip", trip);
+
+        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String formattedStartDate = trip.getStartDate().format(outputFormatter);
+        model.addAttribute("formattedStartDate", formattedStartDate);
+
         return "trips/edit_trip";
     }
 
@@ -228,7 +234,7 @@ public class TripController {
             return "redirect:/trips/manage-events/" + tripId;
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessages", e.getMessage());
-            return "redirect:/error"; //todo /error mapping
+            return "redirect:/error";
         }
     }
 

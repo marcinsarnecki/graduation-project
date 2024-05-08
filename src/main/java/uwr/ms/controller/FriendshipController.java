@@ -105,7 +105,7 @@ public class FriendshipController {
                                @RequestParam(name = "page", defaultValue = "0") int page,
                                Principal principal) {
         String username = principal.getName();
-        Pageable pageable = PageRequest.of(page, 10);
+        Pageable pageable = PageRequest.of(page, 12);
         Page<UserEntity> friendsPage = friendshipService.getFriendsPageable(username, pageable);
         model.addAttribute("friendsPage", friendsPage);
         return "friends/my_friends";

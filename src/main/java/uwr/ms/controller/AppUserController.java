@@ -24,7 +24,7 @@ import java.util.List;
 @RequestMapping("/app-user")
 @Log4j2
 @Value
-public class AppUserController { //TODO "/error" mapping
+public class AppUserController {
     AppUserService appUserService;
     public record SignUpRequest(String username, String email, String password) {}
     @GetMapping("/signup")

@@ -1,10 +1,12 @@
 <div data-th-fragment="content">
-  <div class="container mt-4">
+  <div class="container mt-3">
     <div class="row justify-content-center">
       <div class="col-md-8 col-lg-6">
         <div class="card">
+          <div class="card-header d-flex align-items-center justify-content-center" style="padding: 1rem;">
+            <h5 class="mb-0">Trip Invitations</h5>
+          </div>
           <div class="card-body">
-            <h5 class="card-title text-center">Trip Invitations</h5>
             <div class="list-container">
               <ul class="list-group list-group-flush">
                 <li class="list-group-item invitation-content" th:each="invitation : ${invitations}">

@@ -1,11 +1,13 @@
 <div data-th-fragment="content">
-    <div class="container mt-4">
+    <div class="container mt-3">
         <div class="row justify-content-center">
             <div class="col-md-8 col-lg-6">
                 <th:block th:replace="~{fragments/alert_message_fragment::alertMessages(${errorMessages}, ${successMessage})}"></th:block>
                 <div class="card">
+                    <div class="card-header d-flex align-items-center justify-content-center" style="padding: 1rem;">
+                        <h5 class="mb-0">Edit Trip</h5>
+                    </div>
                     <div class="card-body">
-                        <h5 class="card-title text-center">Edit Trip</h5>
                         <form data-th-action="@{|/trips/update/${trip.id}|}" method="post" data-th-object="${trip}">
                             <div class="form-group">
                                 <label for="name">Trip Name:</label>
@@ -13,7 +15,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="startDate">Start Date:</label>
-                                <input type="date" class="form-control" id="startDate" name="startDate" data-th-field="*{startDate}" required>
+                                <input type="date" class="form-control" id="startDate" name="startDate" th:value="${formattedStartDate}" required>
                             </div>
                             <div class="form-group">
                                 <label for="location">Location:</label>
@@ -21,13 +23,13 @@
                             </div>
                             <div class="form-group">
                                 <label for="description">Description:</label>
-                                <textarea class="form-control" id="description" name="description" data-th-field="*{description}" rows="5" style="margin-bottom: 20px;"></textarea>
+                                <textarea class="form-control" id="description" name="description" data-th-field="*{description}" rows="10" style="margin-bottom: 20px;"></textarea>
                             </div>
                             <div class="d-flex justify-content-between">
-                                <button type="submit" class="btn btn-success">Save Changes</button>
+                                <button type="submit" class="btn btn-outline-success">Save Changes</button>
                                 <div>
-                                    <a th:href="@{|/trips/manage-participants/${trip.id}|}" class="btn btn-primary">Manage Participants</a>
-                                    <a th:href="@{|/trips/manage-events/${trip.id}|}" class="btn btn-primary">Manage Events</a>
+                                    <a th:href="@{|/trips/manage-participants/${trip.id}|}" class="btn btn-outline-primary">Manage Participants</a>
+                                    <a th:href="@{|/trips/manage-events/${trip.id}|}" class="btn btn-outline-primary">Manage Events</a>
                                 </div>
                             </div>
                         </form>
