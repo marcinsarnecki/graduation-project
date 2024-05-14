@@ -34,6 +34,9 @@ public class TripEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column
+    private Currency defaultCurrency;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -44,7 +47,7 @@ public class TripEntity {
     private Set<TripInvitationEntity> invitations = new HashSet<>();
 
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<EventEntity> events = new ArrayList<>();;
+    private List<EventEntity> events = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

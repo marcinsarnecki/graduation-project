@@ -13,6 +13,8 @@ import java.util.Optional;
 public interface UserEntityRepository extends JpaRepository<UserEntity, String> {
     Optional<UserEntity> findByUsername(String username);
 
+    List<UserEntity> findByUsernameIn(List<String> usernames);
+
     @Query("SELECT u FROM UserEntity u " +
             "where u.username in " +
             " (select f.addressee.username from FriendshipEntity f where f.requester.username = :username and f.status = 'ACCEPTED') " +

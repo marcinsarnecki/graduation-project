@@ -26,6 +26,17 @@
                             </div>
 
                             <div class="form-group">
+                                <label for="defaultCurrency">Default Currency:</label>
+                                <select class="form-control" id="defaultCurrency" name="defaultCurrency" required>
+                                    <option value="" th:selected="${trip.defaultCurrency == null}">Select a currency</option>
+                                    <option th:each="currency : ${T(uwr.ms.constant.Currency).values()}"
+                                            th:value="${currency.name()}"
+                                            th:selected="${currency.name() == trip.defaultCurrency?.name()}"
+                                            th:text="${currency.name()} + ' - ' + ${currency.getDescription()}">Currency</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
                                 <label for="description">Description:</label>
                                 <textarea class="form-control" id="description" name="description" placeholder="Trip description"></textarea>
                             </div>

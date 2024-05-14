@@ -1,0 +1,155 @@
+<div data-th-fragment="content">
+    <div class="container mt-3">
+        <div class="row justify-content-center">
+            <div class="col-md-10 col-lg-8">
+                <th:block
+                        th:replace="~{fragments/alert_message_fragment::alertMessages(${errorMessages}, ${successMessage})}"></th:block>
+
+                <ul class="nav nav-tabs justify-content-center mb-4">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-toggle="tab" href="#expenses">Expenses</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#balances">Balances</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#addExpense">Add Expense</a>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <div id="expenses" class="col-md-8 offset-md-2 tab-pane fade show active">
+                        <div class="card">
+                            <div class="card-header text-center">
+                                <h5>Expenses</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group expenses-container">
+                                    <th:block th:each="expense, iter : ${expenses}">
+                                        <a href="#" class="list-group-item list-group-item-action flex-column align-items-start" th:onclick="'toggleExpenseDetail(' + ${iter.index} + '); return false;'">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <div class="mb-1">
+                                                    <h6 th:text="${expense.title}">Expense Title</h6>
+                                                    <p class="mb-1"><small>Paid by: <span th:text="${expense.payer.name}">Payer Name</span></small></p>
+                                                </div>
+                                                <div class="text-right">
+                                                    <h6 th:text="${#numbers.formatDecimal(expense.amount / 100, 1, 2)} + ' ' + ${trip.defaultCurrency}">Amount</h6>
+                                                    <p><small th:text="${expense.date}">Date</small></p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div th:id="'detail-' + ${iter.index}" class="expense-detail" style="display: none;">
+                                            <ul class="list-group">
+                                                <div th:each="participant : ${expense.expenseParticipants}">
+                                                    <li class="detail-item">
+                                                        <span th:text="${participant.participant.name} + (${participant.participant.name} != ${participant.participant.username} ? ' (' + ${participant.participant.username} + ')' : '')">Username</span>
+                                                        <span th:text="${#numbers.formatDecimal(participant.amount / 100, 1, 2)} + ' ' + ${trip.defaultCurrency}">Share</span>
+                                                    </li>
+                                                </div>
+                                            </ul>
+                                        </div>
+                                    </th:block>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="balances" class="tab-pane fade">
+                        <div class="card">
+                            <div class="card-header text-center">
+                                <h5>Balances</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>balances hello world</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="addExpense" class="col-md-8 offset-md-2 tab-pane fade">
+                        <div class="card">
+                            <div class="card-header text-center">
+                                <h5>Add Expense</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="expenseForm" th:action="@{/trips/add-expense/{tripId}(tripId=${trip.id})}"
+                                      method="post">
+
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label for="title">Title:</label>
+                                            <input type="text" class="form-control" id="title" name="title"
+                                                   placeholder="Enter title" required>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="amount">Amount:</label>
+                                            <input type="number" class="form-control" id="amount" name="amount"
+                                                   placeholder="Enter amount" step="0.01" required>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="date">Date:</label>
+                                            <input type="date" class="form-control" id="date" name="date" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label for="currencySelector">Currency:</label>
+                                            <select class="form-control" id="currencySelector" name="currency" required>
+                                                <option value="">Select a currency</option>
+                                                <option th:each="currency : ${currencies}"
+                                                        th:value="${currency.name()}"
+                                                        th:text="${currency.name()} + ' - ' + ${currency.getDescription()}"
+                                                        th:selected="${currency.name()} == '__${trip.defaultCurrency}__'">
+                                                    Currency
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="payer">Paid By:</label>
+                                            <select class="form-control" id="payer" name="payerUsername" required>
+                                                <option value="">Select who paid</option>
+                                                <option th:each="participant : ${tripParticipants}"
+                                                        th:value="${participant.username}"
+                                                        th:text="${participant.username} + (${participant.name} != ${participant.username} ? ' (' + ${participant.name} + ')' : '')">
+                                                    Friend
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 mb-3 d-flex align-items-end">
+                                            <button type="button" id="toggleSplitMode"
+                                                    class="btn btn-outline-secondary w-100">Advanced Mode
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div id="participantsContainer">
+                                        <div th:each="participant : ${tripParticipants}" class="participant-row">
+                                            <div class="participant-info">
+                                                <input type="checkbox" class="form-check-input participant-checkbox"
+                                                       th:id="'participant' + ${participant.username}"
+                                                       th:value="${participant.username}" name="participantUsernames"/>
+                                                <label class="form-check-label"
+                                                       th:for="'participant' + ${participant.username}"
+                                                       th:text="${participant.name} + (${participant.name} != ${participant.username} ? ' (' + ${participant.username} + ')' : '')">Participant</label>
+                                            </div>
+                                            <div class="weight-share">
+                                                <input type="number" class="form-control weight-input" value="0" min="0"
+                                                       title="Weight">
+                                                <input type="text" class="form-control share-input" readonly
+                                                       value="$0.00">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="text-center mt-4">
+                                        <button type="submit" class="btn btn-link">Add Expense</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

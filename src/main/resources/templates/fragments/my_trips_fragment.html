@@ -16,7 +16,7 @@
                                 <div class="trip-actions">
                                     <div class="trip-actions">
                                         <a th:href="@{|/trips/view/${trip.id}|}" class="btn btn-outline-primary btn-sm">View</a>
-                                        <a th:href="@{|/trips/split-expenses/${trip.id}|}" class="btn btn-outline-primary btn-sm">Split Expenses</a>
+                                        <a th:href="@{|/trips/expenses/${trip.id}|}" class="btn btn-outline-primary btn-sm">Expenses</a>
                                         <a th:href="@{|/trips/edit/${trip.id}|}" class="btn btn-outline-primary btn-sm" th:if="${trip.owner}">Edit</a>
                                     </div>
 
