@@ -1,6 +1,5 @@
 package uwr.ms.controller;
 
-import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -10,13 +9,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import uwr.ms.constant.Currency;
 import uwr.ms.model.entity.*;
-import uwr.ms.model.repository.UserEntityRepository;
-import uwr.ms.service.AppUserService;
 import uwr.ms.service.ExpensesService;
-import uwr.ms.service.FriendshipService;
 import uwr.ms.service.TripService;
-
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,13 +19,11 @@ import java.util.stream.Collectors;
 @RequestMapping("/trips")
 public class ExpensesController {
     private final TripService tripService;
-    private final FriendshipService friendshipService;
     private final ExpensesService expensesService;
 
     @Autowired
-    public ExpensesController(TripService tripService, FriendshipService friendshipService, ExpensesService expensesService) {
+    public ExpensesController(TripService tripService, ExpensesService expensesService) {
         this.tripService = tripService;
-        this.friendshipService = friendshipService;
         this.expensesService = expensesService;
     }
 
@@ -59,16 +51,35 @@ public class ExpensesController {
                 .collect(Collectors.toList());
 
         List<ExpenseEntity> expenses = expensesService.findAllExpensesByTripId(tripId);
-        expenses.sort(Comparator.comparing(ExpenseEntity::getDate));
+        List<BalanceEntity> balances = expensesService.findAllBalancesByTripId(tripId);
 
-//        expenses.forEach(expense -> expense.setExpenseParticipants(
-//                expensesService.findAllParticipantsByExpenseId(expense.getId())
-//        ));
+        Map<String, Integer> netBalances = new HashMap<>();
+        for (UserEntity participant : tripParticipants) {
+            netBalances.put(participant.getUsername(), 0);
+        }
+        for (BalanceEntity balance : balances) {
+            netBalances.put(balance.getDebtor().getUsername(), netBalances.get(balance.getDebtor().getUsername()) - balance.getAmount());
+            netBalances.put(balance.getCreditor().getUsername(), netBalances.get(balance.getCreditor().getUsername()) + balance.getAmount());
+        }
+        netBalances.entrySet().removeIf(entry -> entry.getValue() == 0);
 
+        List<UserBalanceDTO> userBalanceDTOs = tripParticipants.stream()
+                .filter(participant -> netBalances.containsKey(participant.getUsername()))
+                .map(participant -> new UserBalanceDTO(participant.getUsername(), participant.getName(), netBalances.get(participant.getUsername()))).toList();
+
+        int maxBalance = userBalanceDTOs.stream()
+                .mapToInt(UserBalanceDTO::balance)
+                .map(Math::abs)
+                .max()
+                .orElse(1);
+
+        model.addAttribute("maxBalance", maxBalance);
         model.addAttribute("expenses", expenses);
         model.addAttribute("trip", trip);
         model.addAttribute("tripParticipants", tripParticipants);
         model.addAttribute("currencies", Arrays.asList(Currency.values()));
+        model.addAttribute("balances", balances);
+        model.addAttribute("netBalances", userBalanceDTOs);
 
         return "expenses/expenses";
     }
@@ -85,5 +96,6 @@ public class ExpensesController {
         }
     }
 
-    public record ExpenseForm(String title, Double amount, String currency, LocalDate date, String payerUsername, List<String> participantUsernames, List<Integer> participantAmounts) {}
+    public record ExpenseForm(String title, Integer amount, String currency, LocalDate date, String payerUsername, List<String> participantUsernames, List<Integer> participantAmounts) {}
+    public record UserBalanceDTO(String username, String name, int balance) {}
 }

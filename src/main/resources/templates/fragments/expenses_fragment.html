@@ -25,25 +25,34 @@
                             </div>
                             <div class="card-body">
                                 <div class="list-group expenses-container">
+                                    <th:block th:if="${#lists.isEmpty(expenses)}">
+                                        <p class="text-center">No expenses added yet</p>
+                                    </th:block>
                                     <th:block th:each="expense, iter : ${expenses}">
-                                        <a href="#" class="list-group-item list-group-item-action flex-column align-items-start" th:onclick="'toggleExpenseDetail(' + ${iter.index} + '); return false;'">
+                                        <a href="#"
+                                           class="list-group-item list-group-item-action flex-column align-items-start"
+                                           th:onclick="'toggleExpenseDetail(' + ${iter.index} + '); return false;'">
                                             <div class="d-flex w-100 justify-content-between">
                                                 <div class="mb-1">
                                                     <h6 th:text="${expense.title}">Expense Title</h6>
-                                                    <p class="mb-1"><small>Paid by: <span th:text="${expense.payer.name}">Payer Name</span></small></p>
+                                                    <p class="mb-1"><small>Paid by: <span
+                                                            th:text="${expense.payer.name}">Payer Name</span></small>
+                                                    </p>
                                                 </div>
                                                 <div class="text-right">
-                                                    <h6 th:text="${#numbers.formatDecimal(expense.amount / 100, 1, 2)} + ' ' + ${trip.defaultCurrency}">Amount</h6>
+                                                    <h6 th:text="${#numbers.formatDecimal(expense.amount / 100.0, 1, 2)} + ' ' + ${trip.defaultCurrency}">
+                                                        Amount</h6>
                                                     <p><small th:text="${expense.date}">Date</small></p>
                                                 </div>
                                             </div>
                                         </a>
-                                        <div th:id="'detail-' + ${iter.index}" class="expense-detail" style="display: none;">
+                                        <div th:id="'detail-' + ${iter.index}" class="expense-detail"
+                                             style="display: none;">
                                             <ul class="list-group">
                                                 <div th:each="participant : ${expense.expenseParticipants}">
                                                     <li class="detail-item">
                                                         <span th:text="${participant.participant.name} + (${participant.participant.name} != ${participant.participant.username} ? ' (' + ${participant.participant.username} + ')' : '')">Username</span>
-                                                        <span th:text="${#numbers.formatDecimal(participant.amount / 100, 1, 2)} + ' ' + ${trip.defaultCurrency}">Share</span>
+                                                        <span th:text="${#numbers.formatDecimal(participant.amount / 100.0, 1, 2)} + ' ' + ${trip.defaultCurrency}">Share</span>
                                                     </li>
                                                 </div>
                                             </ul>
@@ -54,16 +63,74 @@
                         </div>
                     </div>
 
-                    <div id="balances" class="tab-pane fade">
+                    <div id="balances" class="col-md-8 offset-md-2 tab-pane fade">
                         <div class="card">
                             <div class="card-header text-center">
                                 <h5>Balances</h5>
                             </div>
-                            <div class="card-body">
-                                <p>balances hello world</p>
+                            <div class="card-body balances-container">
+                                <div th:each="balanceEntry : ${netBalances}">
+                                    <div class="balance-row">
+                                        <div class="left-side">
+                                                <span th:if="${balanceEntry.balance() > 0}" class="balance-username"
+                                                      th:text="${balanceEntry.name()} + (${balanceEntry.name()} != ${balanceEntry.username()} ? ' (' + ${balanceEntry.username()} + ')' : '')"></span>
+                                            <div th:if="${balanceEntry.balance() < 0}" class="balance negative"
+                                                 th:style="'width:' + ${T(java.lang.Math).round(-balanceEntry.balance() * 100.0 / maxBalance)} + '%'">
+                                                    <span class="balance-amount"
+                                                          th:text="${#numbers.formatDecimal(balanceEntry.balance() / 100.0, 1, 2)} + ' ' + ${trip.defaultCurrency}"></span>
+                                            </div>
+                                        </div>
+                                        <div class="right-side">
+                                            <div th:if="${balanceEntry.balance() > 0}" class="balance positive"
+                                                 th:style="'width:' + ${T(java.lang.Math).round(balanceEntry.balance() * 100.0 / maxBalance)} + '%'">
+                                                    <span class="balance-amount"
+                                                          th:text="${#numbers.formatDecimal(balanceEntry.balance() / 100.0, 1, 2)} + ' ' + ${trip.defaultCurrency}"></span>
+                                            </div>
+                                            <span th:if="${balanceEntry.balance() < 0}" class="balance-username"
+                                                  th:text="${balanceEntry.name()} + (${balanceEntry.name()} != ${balanceEntry.username()} ? ' (' + ${balanceEntry.username()} + ')' : '')"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="transfers-list" th:if="${balances.size() > 0}">
+                                    <h6>Transfers</h6>
+                                    <div class="list-group transfers-container">
+                                        <th:block th:each="balance, iter : ${balances}">
+                                            <a href="#"
+                                               class="list-group-item list-group-item-action flex-column align-items-start"
+                                               th:onclick="'toggleTransferDetail(' + ${iter.index} + '); return false;'">
+                                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                                    <div class="d-flex flex-column align-items-start">
+                                                        <h6 th:text="${balance.debtor.name}"></h6>
+                                                        <p class="m-0">owes</p>
+                                                        <h6 th:text="${balance.creditor.name}"></h6>
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <h6 th:text="${#numbers.formatDecimal(balance.amount / 100.0, 1, 2)} + ' ' + ${trip.defaultCurrency}"></h6>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                            <div th:id="'transfer-detail-' + ${iter.index}" class="transfer-detail"
+                                                 style="display: none;">
+                                                <button type="button" class="btn btn-link"
+                                                        th:data-debtor-username="${balance.debtor.username}"
+                                                        th:data-creditor-username="${balance.creditor.username}"
+                                                        th:data-amount="${balance.amount}"
+                                                        onclick="openAddExpenseForm(this); return false;">
+                                                    Mark as Paid
+                                                </button>
+                                            </div>
+                                        </th:block>
+                                    </div>
+                                </div>
+                                <div class="all-settled" th:if="${balances.size() == 0}">
+                                    <h6>All are settled</h6>
+                                </div>
+
+
                             </div>
                         </div>
                     </div>
+
 
                     <div id="addExpense" class="col-md-8 offset-md-2 tab-pane fade">
                         <div class="card">
@@ -110,7 +177,7 @@
                                                 <option value="">Select who paid</option>
                                                 <option th:each="participant : ${tripParticipants}"
                                                         th:value="${participant.username}"
-                                                        th:text="${participant.username} + (${participant.name} != ${participant.username} ? ' (' + ${participant.name} + ')' : '')">
+                                                        th:text="${participant.name} + (${participant.name} != ${participant.username} ? ' (' + ${participant.username} + ')' : '')">
                                                     Friend
                                                 </option>
                                             </select>

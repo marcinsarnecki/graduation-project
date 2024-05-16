@@ -5,43 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const participantContainer = document.getElementById('participantsContainer');
     let isAdvanced = false;
 
-    function calculateShares() {
-        const totalAmount = parseFloat(amountInput.value) || 0;
-        const currency = currencySelector.value;
-        const participants = Array.from(participantContainer.querySelectorAll('.participant-checkbox'));
-        const weights = participantContainer.querySelectorAll('.weight-input');
-        const shares = participantContainer.querySelectorAll('.share-input');
 
-        if (isAdvanced) {
-            let totalWeight = 0;
-            participants.forEach((participant, index) => {
-                const weight = Math.max(parseFloat(weights[index].value) || 0, 0);
-                weights[index].value = weight;
-                if (participant.checked) {
-                    totalWeight += weight;
-                }
-                weights[index].style.display = 'inline-block';
-            });
-
-            participants.forEach((participant, index) => {
-                if (participant.checked) {
-                    const weight = parseFloat(weights[index].value) || 0;
-                    const share = totalWeight > 0 ? ((totalAmount * weight) / totalWeight).toFixed(2) : 0;
-                    shares[index].value = `${share} ${currency}`;
-                } else {
-                    shares[index].value = `0.00 ${currency}`;
-                }
-            });
-        } else {
-            const selectedParticipants = participants.filter(participant => participant.checked);
-            const share = (totalAmount / selectedParticipants.length).toFixed(2);
-
-            participants.forEach((participant, index) => {
-                weights[index].style.display = 'none';
-                shares[index].value = participant.checked ? `${share} ${currency}` : `0.00 ${currency}`;
-            });
-        }
-    }
 
     toggleSplitMode.addEventListener('click', () => {
         isAdvanced = !isAdvanced;
@@ -107,25 +71,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 form.appendChild(hiddenInput);
             }
         });
-    });
-});
-
-function switchTab(event) {
-    event.preventDefault();
-    document.querySelectorAll('.nav-link').forEach(function (link) {
-        link.classList.remove('active');
-    });
-    document.querySelectorAll('.tab-pane').forEach(function (pane) {
-        pane.classList.remove('show', 'active');
+        let cleanedValue = parseFloat(amountInput.value.replace(/[^\d.-]/g, ''));
+        cleanedValue = Math.round(cleanedValue * 100);
+        amountInput.value = cleanedValue;
     });
 
-    this.classList.add('active');
-    const activePaneId = this.getAttribute('href');
-    const activePane = document.querySelector(activePaneId);
-    if (activePane) {
-        activePane.classList.add('show', 'active');
+    function switchTab(event) {
+        event.preventDefault();
+        document.querySelectorAll('.nav-link').forEach(function (link) {
+            link.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-pane').forEach(function (pane) {
+            pane.classList.remove('show', 'active');
+        });
+
+        this.classList.add('active');
+        const activePaneId = this.getAttribute('href');
+        const activePane = document.querySelector(activePaneId);
+        if (activePane) {
+            activePane.classList.add('show', 'active');
+        }
     }
-}
+});
 
 function toggleExpenseDetail(index) {
     const detailElement = document.querySelector('#detail-' + index);
@@ -138,3 +105,105 @@ function toggleExpenseDetail(index) {
         }
     });
 }
+
+function toggleTransferDetail(index) {
+    const detailElement = document.querySelector('#transfer-detail-' + index);
+    const allDetails = document.querySelectorAll('.transfer-detail');
+    allDetails.forEach(element => {
+        if (element === detailElement) {
+            element.style.display = element.style.display === 'none' ? 'block' : 'none';
+        } else {
+            element.style.display = 'none';
+        }
+    });
+}
+
+function openAddExpenseForm(button) {
+    const debtorUsername = button.getAttribute('data-debtor-username');
+    const creditorUsername = button.getAttribute('data-creditor-username');
+    const amount = button.getAttribute('data-amount');
+
+    const titleInput = document.getElementById('title');
+    const amountInput = document.getElementById('amount');
+    const payerSelect = document.getElementById('payer');
+    const participantCheckboxes = document.querySelectorAll('.participant-checkbox');
+    const dateInput = document.getElementById('date');
+
+    titleInput.value = 'Return for ' + creditorUsername;
+    amountInput.value = (amount / 100).toFixed(2);
+    payerSelect.value = debtorUsername;
+
+    participantCheckboxes.forEach(checkbox => {
+        checkbox.checked = checkbox.value === creditorUsername;
+    });
+
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    dateInput.value = `${year}-${month}-${day}`;
+
+    const addExpenseTabLink = document.querySelector('a[href="#addExpense"]');
+    activateTab(addExpenseTabLink);
+    calculateShares();
+}
+
+function activateTab(tabLink) {
+    document.querySelectorAll('.nav-link').forEach(function (link) {
+        link.classList.remove('active');
+    });
+    document.querySelectorAll('.tab-pane').forEach(function (pane) {
+        pane.classList.remove('show', 'active');
+    });
+
+    tabLink.classList.add('active');
+    const activePaneId = tabLink.getAttribute('href');
+    const activePane = document.querySelector(activePaneId);
+    if (activePane) {
+        activePane.classList.add('show', 'active');
+    }
+}
+
+function calculateShares() {
+    const amountInput = document.getElementById('amount');
+    const currencySelector = document.getElementById('currencySelector');
+    const participantContainer = document.getElementById('participantsContainer');
+    const totalAmount = parseFloat(amountInput.value) || 0;
+    const currency = currencySelector.value;
+    const participants = Array.from(participantContainer.querySelectorAll('.participant-checkbox'));
+    const weights = participantContainer.querySelectorAll('.weight-input');
+    const shares = participantContainer.querySelectorAll('.share-input');
+    let isAdvanced = document.getElementById('toggleSplitMode').textContent === 'Simple mode';
+
+    if (isAdvanced) {
+        let totalWeight = 0;
+        participants.forEach((participant, index) => {
+            const weight = Math.max(parseFloat(weights[index].value) || 0, 0);
+            weights[index].value = weight;
+            if (participant.checked) {
+                totalWeight += weight;
+            }
+            weights[index].style.display = 'inline-block';
+        });
+
+        participants.forEach((participant, index) => {
+            if (participant.checked) {
+                const weight = parseFloat(weights[index].value) || 0;
+                const share = totalWeight > 0 ? ((totalAmount * weight) / totalWeight).toFixed(2) : 0;
+                shares[index].value = `${share} ${currency}`;
+            } else {
+                shares[index].value = `0.00 ${currency}`;
+            }
+        });
+    } else {
+        const selectedParticipants = participants.filter(participant => participant.checked);
+        const share = (totalAmount / selectedParticipants.length).toFixed(2);
+
+        participants.forEach((participant, index) => {
+            weights[index].style.display = 'none';
+            shares[index].value = participant.checked ? `${share} ${currency}` : `0.00 ${currency}`;
+        });
+    }
+}
+
+

@@ -16,6 +16,7 @@ import java.util.Optional;
 public interface TripParticipantEntityRepository extends JpaRepository<TripParticipantEntity, Long> {
     Page<TripParticipantEntity> findByTrip(TripEntity trip, Pageable pageable);
     List<TripParticipantEntity> findByTrip(TripEntity trip);
+    List<TripParticipantEntity> findByTripId(Long tripId);
 
     Optional<TripParticipantEntity> findByTripAndUser(TripEntity trip, UserEntity user);
 

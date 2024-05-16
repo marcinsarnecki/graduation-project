@@ -1,33 +1,39 @@
 package uwr.ms.service;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uwr.ms.constant.Currency;
 import uwr.ms.controller.ExpensesController;
-import uwr.ms.model.entity.ExpenseEntity;
-import uwr.ms.model.entity.ExpenseParticipantEntity;
-import uwr.ms.model.entity.TripEntity;
-import uwr.ms.model.entity.UserEntity;
+import uwr.ms.model.entity.*;
 import uwr.ms.model.repository.*;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class ExpensesService {
     private final TripEntityRepository tripRepository;
     private final UserEntityRepository userRepository;
     private final ExpenseEntityRepository expenseRepository;
-    private final ExpenseParticipantEntityRepository expenseParticipantRepository;
+    private final TripParticipantEntityRepository tripParticipantRepository;
     private final BalanceEntityRepository balanceRepository;
 
-    public ExpensesService(TripEntityRepository tripRepository, UserEntityRepository userRepository, ExpenseEntityRepository expenseRepository, ExpenseParticipantEntityRepository expenseParticipantRepository, BalanceEntityRepository balanceRepository) {
+    public ExpensesService(TripEntityRepository tripRepository, UserEntityRepository userRepository, ExpenseEntityRepository expenseRepository, TripParticipantEntityRepository tripParticipantRepository, BalanceEntityRepository balanceRepository) {
         this.tripRepository = tripRepository;
         this.userRepository = userRepository;
         this.expenseRepository = expenseRepository;
-        this.expenseParticipantRepository = expenseParticipantRepository;
+        this.tripParticipantRepository = tripParticipantRepository;
         this.balanceRepository = balanceRepository;
+    }
+
+    public List<ExpenseEntity> findAllExpensesByTripId(Long tripId) {
+        List<ExpenseEntity> expenses = expenseRepository.findAllByTripId(tripId);
+        expenses.sort(Comparator.comparing(ExpenseEntity::getDate));
+        return expenses;
+    }
+
+    public List<BalanceEntity> findAllBalancesByTripId(Long tripId) {
+        return balanceRepository.findAllByTripId(tripId);
     }
 
     @Transactional
@@ -38,15 +44,21 @@ public class ExpensesService {
         newExpense.setTitle(expenseForm.title());
         newExpense.setDate(expenseForm.date());
 
-        int amountInCents = (int) Math.round(expenseForm.amount() * 100);
+        int amountInCents = expenseForm.amount();
+        int summedParticipantAmounts = 0;
+        for(int amount: expenseForm.participantAmounts())
+            summedParticipantAmounts += amount;
+        if(amountInCents != summedParticipantAmounts)
+            amountInCents = summedParticipantAmounts;
         newExpense.setAmount(amountInCents);
 
         UserEntity payer = userRepository.findByUsername(expenseForm.payerUsername())
                 .orElseThrow(() -> new IllegalArgumentException("Payer not found"));
         newExpense.setPayer(payer);
 
-        List<UserEntity> participants = userRepository.findByUsernameIn(expenseForm.participantUsernames());
-        participants.sort(Comparator.comparing(UserEntity::getName));
+        List<UserEntity> participants = expenseForm.participantUsernames().stream()
+                .map(username -> userRepository.findByUsername(username)
+                        .orElseThrow(() -> new IllegalArgumentException("User not found: " + username))).toList();
 
         List<ExpenseParticipantEntity> expenseParticipants = new ArrayList<>();
         for (int i = 0; i < participants.size(); i++) {
@@ -56,10 +68,65 @@ public class ExpensesService {
         }
 
         newExpense.setExpenseParticipants(expenseParticipants);
+        updateBalances(trip, newExpense);
         expenseRepository.save(newExpense);
     }
 
-    public List<ExpenseEntity> findAllExpensesByTripId(Long tripId) {
-        return expenseRepository.findAllByTripId(tripId);
+    private void updateBalances(TripEntity trip, ExpenseEntity newExpense) {
+        List<BalanceEntity> balanceEntities = balanceRepository.findAllByTripId(trip.getId());
+        balanceRepository.deleteAllByTripId(trip.getId());
+        List<String> usernames = tripParticipantRepository.findByTripId(trip.getId()).stream().map(TripParticipantEntity::getUser).map(UserEntity::getUsername).toList();
+        Map<String, Integer> balances = new HashMap<>();
+        for (String username : usernames) {
+            balances.put(username, 0);
+        }
+        for (BalanceEntity balance : balanceEntities) {
+            balances.put(balance.getDebtor().getUsername(), balances.get(balance.getDebtor().getUsername()) - balance.getAmount());
+            balances.put(balance.getCreditor().getUsername(), balances.get(balance.getCreditor().getUsername()) + balance.getAmount());
+        }
+        balances.put(newExpense.getPayer().getUsername(), balances.get(newExpense.getPayer().getUsername()) + newExpense.getAmount());
+        for (ExpenseParticipantEntity participant : newExpense.getExpenseParticipants()) {
+            balances.put(participant.getParticipant().getUsername(), balances.get(participant.getParticipant().getUsername()) - participant.getAmount());
+        }
+        PriorityQueue<Pair> creditors = new PriorityQueue<>((a, b) -> b.getAmount() - a.getAmount());
+        PriorityQueue<Pair> debtors = new PriorityQueue<>((a, b) -> b.getAmount() - a.getAmount());
+
+        for (Map.Entry<String, Integer> entry : balances.entrySet()) {
+            if (entry.getValue() > 0) {
+                creditors.offer(new Pair(entry.getKey(), entry.getValue()));
+            } else if (entry.getValue() < 0) {
+                debtors.offer(new Pair(entry.getKey(), -entry.getValue()));
+            }
+        }
+        List<BalanceEntity> newBalances = new ArrayList<>();
+        while (!creditors.isEmpty() && !debtors.isEmpty()) {
+            Pair creditor = creditors.poll();
+            Pair debtor = debtors.poll();
+
+            int transferAmount = Math.min(creditor.getAmount(), debtor.getAmount());
+
+            BalanceEntity balance = new BalanceEntity();
+            balance.setTrip(trip);
+            balance.setDebtor(userRepository.findByUsername(debtor.getUsername())
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + debtor.getUsername())));
+            balance.setCreditor(userRepository.findByUsername(creditor.getUsername())
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + creditor.getUsername())));
+            balance.setAmount(transferAmount);
+            newBalances.add(balance);
+
+            if (creditor.getAmount() > debtor.getAmount()) {
+                creditors.offer(new Pair(creditor.getUsername(), creditor.getAmount() - transferAmount));
+            } else if (debtor.getAmount() > creditor.getAmount()) {
+                debtors.offer(new Pair(debtor.getUsername(), debtor.getAmount() - transferAmount));
+            }
+        }
+        balanceRepository.saveAll(newBalances);
+    }
+
+    @Data
+    @AllArgsConstructor
+    private class Pair {
+        private String username;
+        private int amount;
     }
 }
