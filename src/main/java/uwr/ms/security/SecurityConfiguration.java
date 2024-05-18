@@ -14,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import uwr.ms.service.AppUserService;
 
+import static uwr.ms.constant.Authority.STANDARD_USER;
+
 @Configuration
 @Log4j2
 public class SecurityConfiguration {
@@ -43,7 +45,7 @@ public class SecurityConfiguration {
                         .userInfoEndpoint(ui -> ui.userService(appUserService.oauth2LoginHandler())))
                 .authorizeHttpRequests(c -> c
                         .requestMatchers("/login", "/app-user/signup", "/error").permitAll()
-                        .requestMatchers("/app-user/change-password").hasAuthority("STANDARD_USER")
+                        .requestMatchers("/app-user/change-password").hasAuthority(STANDARD_USER.name())
                         .anyRequest().authenticated())
                 .build();
     }

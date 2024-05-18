@@ -67,6 +67,8 @@ public enum Message {
     USER_ALREADY_PARTICIPANT("User is already a participant of the trip."),
     //users
     IMAGE_URL_TOO_LONG("Image URL is longer than 255 characters."),
+    NAME_TOO_LONG("Name is longer than 39 characters."),
+    NAME_CANNOT_BE_EMPTY("Name can not be empty."),
     INVALID_USER_INSTANCE("User must be an instance of AppUser."),
     PROFILE_UPDATE_SUCCESS("Profile updated successfully."),
     PROFILE_UPDATE_FAILED("Failed to update profile: %s"),

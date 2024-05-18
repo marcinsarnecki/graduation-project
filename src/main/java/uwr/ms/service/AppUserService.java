@@ -173,6 +173,13 @@ public class AppUserService implements UserDetailsManager {
         if (!validationErrors.isEmpty())
             throw new ValidationException(validationErrors);
 
+        if(editProfileRequest.name().isEmpty())
+            throw new IllegalArgumentException(Message.NAME_CANNOT_BE_EMPTY.toString());
+
+        if(editProfileRequest.name().length() > 39) {
+            throw new IllegalArgumentException(Message.NAME_TOO_LONG.toString());
+        }
+
         if (!editProfileRequest.imageUrl().isEmpty() && editProfileRequest.imageUrl().length() > 255)
             throw new IllegalArgumentException(Message.IMAGE_URL_TOO_LONG.toString());
 

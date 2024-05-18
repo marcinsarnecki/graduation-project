@@ -19,6 +19,8 @@ import uwr.ms.service.AppUserService;
 
 import java.util.List;
 
+import static uwr.ms.constant.Authority.STANDARD_USER;
+
 @Controller
 @RequestMapping("/app-user")
 @Value
@@ -40,7 +42,7 @@ public class AppUserController {
                     .email(signUpRequest.email())
                     .password(signUpRequest.password())
                     .provider(LoginProvider.APP)
-                    .authorities(List.of(new SimpleGrantedAuthority("STANDARD_USER"))) //TODO enum for authorities
+                    .authorities(List.of(new SimpleGrantedAuthority(STANDARD_USER.name())))
                     .build());
             redirectAttributes.addFlashAttribute("successMessage", Message.REGISTRATION_SUCCESS.toString());
             return "redirect:/login";
@@ -92,11 +94,11 @@ public class AppUserController {
             redirectAttributes.addFlashAttribute("successMessage", Message.PROFILE_UPDATE_SUCCESS.toString());
         } catch (ValidationException e) {
             redirectAttributes.addFlashAttribute("errors", e.getErrors());
-            return "redirect:/profile/edit";
+            return "redirect:/app-user/edit-profile";
         }
         catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errors", String.format(Message.PROFILE_UPDATE_FAILED.toString(), e.getMessage()));
-            return "redirect:/profile/edit";
+            return "redirect:/app-user/edit-profile";
         }
         return "redirect:/app-user/edit-profile";
     }

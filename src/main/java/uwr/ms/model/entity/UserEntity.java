@@ -11,9 +11,11 @@ import java.util.*;
 @Data
 public class UserEntity {
     @Id
+    @Column(length = 39)
     String username;
     String password;
     String email;
+    @Column(length = 39)
     String name;
 
     @Enumerated(value = EnumType.STRING)
