@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,10 +37,10 @@ public class FriendshipController {
     }
 
     @PostMapping("/add-friend")
-    public String addFriend(@RequestParam("username") String friendUsername, Principal principal, RedirectAttributes redirectAttributes) {
-        String requesterUsername = principal.getName();
+    public String addFriend(@RequestParam("username") String friendUsername, RedirectAttributes redirectAttributes) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
         try {
-            friendshipService.sendFriendRequest(requesterUsername, friendUsername);
+            friendshipService.sendFriendRequest(username, friendUsername);
             redirectAttributes.addFlashAttribute("successMessage", String.format(Message.FRIEND_REQUEST_SENT_SUCCESS.toString(), friendUsername));
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessages", String.format(Message.FRIEND_REQUEST_FAILED.toString(), e.getMessage()));
@@ -48,8 +49,8 @@ public class FriendshipController {
     }
 
     @GetMapping("/requests")
-    public String getRequests(Model model, Principal principal) {
-        String username = principal.getName();
+    public String getRequests(Model model) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
         List<FriendshipEntity> friendRequests = friendshipService.listReceivedFriendRequests(username);
         List<FriendshipEntity> blockedRequests = friendshipService.listBlockedFriendRequests(username);
         model.addAttribute("friendRequests", friendRequests);
@@ -59,8 +60,9 @@ public class FriendshipController {
 
     @PostMapping("/accept-request")
     public String acceptFriendRequest(@RequestParam("requestId") Long requestId, RedirectAttributes redirectAttributes) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
         try {
-            friendshipService.acceptFriendRequest(requestId);
+            friendshipService.acceptFriendRequest(username, requestId);
             redirectAttributes.addFlashAttribute("successMessage", Message.FRIEND_REQUEST_ACCEPTED.toString());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessages", String.format(Message.FRIEND_REQUEST_ACCEPT_FAILED.toString(), e.getMessage()));
@@ -70,8 +72,9 @@ public class FriendshipController {
 
     @PostMapping("/decline-request")
     public String declineFriendRequest(@RequestParam("requestId") Long requestId, RedirectAttributes redirectAttributes) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
         try {
-            friendshipService.declineFriendRequest(requestId);
+            friendshipService.declineFriendRequest(username, requestId);
             redirectAttributes.addFlashAttribute("successMessage", Message.FRIEND_REQUEST_DECLINED.toString());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessages", Message.FRIEND_REQUEST_DECLINE_FAILED + e.getMessage());
@@ -81,8 +84,9 @@ public class FriendshipController {
 
     @PostMapping("/block-request")
     public String blockFriendRequest(@RequestParam("requestId") Long requestId, RedirectAttributes redirectAttributes) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
         try {
-            friendshipService.blockFriendRequest(requestId);
+            friendshipService.blockFriendRequest(username, requestId);
             redirectAttributes.addFlashAttribute("successMessage", Message.FRIEND_REQUEST_BLOCKED.toString());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessages", String.format(Message.FRIEND_REQUEST_BLOCK_FAILED.toString(), e.getMessage()));
@@ -92,8 +96,9 @@ public class FriendshipController {
 
     @PostMapping("/unblock-request")
     public String unblockRequest(@RequestParam("requestId") Long requestId, RedirectAttributes redirectAttributes) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
         try {
-            friendshipService.unblockFriendRequest(requestId);
+            friendshipService.unblockFriendRequest(username, requestId);
             redirectAttributes.addFlashAttribute("successMessage", Message.USER_UNBLOCKED_SUCCESS.toString());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessages", String.format(Message.USER_UNBLOCK_FAILED.toString(), e.getMessage()));
@@ -102,10 +107,8 @@ public class FriendshipController {
     }
 
     @GetMapping("/my-friends")
-    public String getMyFriends(Model model,
-                               @RequestParam(name = "page", defaultValue = "0") int page,
-                               Principal principal) {
-        String username = principal.getName();
+    public String getMyFriends(Model model, @RequestParam(name = "page", defaultValue = "0") int page) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Pageable pageable = PageRequest.of(page, 12);
         Page<UserEntity> friendsPage = friendshipService.getFriendsPageable(username, pageable);
         model.addAttribute("friendsPage", friendsPage);
@@ -113,8 +116,8 @@ public class FriendshipController {
     }
 
     @PostMapping("/delete-friend")
-    public String deleteFriend(@RequestParam("friendUsername") String friendUsername, Principal principal, RedirectAttributes redirectAttributes) {
-        String username = principal.getName();
+    public String deleteFriend(@RequestParam("friendUsername") String friendUsername, RedirectAttributes redirectAttributes) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
         try {
             friendshipService.deleteFriend(username, friendUsername);
             redirectAttributes.addFlashAttribute("successMessage", String.format(Message.UNFRIEND_SUCCESS.toString(), friendUsername));

@@ -34,7 +34,7 @@ public class ExpensesController {
         TripEntity trip;
         try {
             trip = tripService.findTripById(tripId)
-                    .orElseThrow(() -> new IllegalArgumentException(Message.INVALID_TRIP_ID + String.valueOf(tripId)));
+                    .orElseThrow(() -> new IllegalArgumentException(String.format(Message.INVALID_TRIP_ID.toString(), tripId)));
             boolean isParticipant = trip.getParticipants().stream()
                     .anyMatch(participant -> participant.getUser().getUsername().equals(username));
             if (!isParticipant) {

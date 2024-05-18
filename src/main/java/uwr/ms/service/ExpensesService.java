@@ -40,7 +40,7 @@ public class ExpensesService {
     @Transactional
     public void saveExpense(Long tripId, ExpensesController.ExpenseForm expenseForm) {
         TripEntity trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException(Message.INVALID_TRIP_ID + String.valueOf(tripId)));
+                .orElseThrow(() -> new IllegalArgumentException(String.format(Message.INVALID_TRIP_ID.toString(), tripId)));
         ExpenseEntity newExpense = new ExpenseEntity();
         newExpense.setTrip(trip);
         newExpense.setTitle(expenseForm.title());

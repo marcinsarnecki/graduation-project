@@ -3,6 +3,7 @@ package uwr.ms.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uwr.ms.constant.FriendshipStatus;
@@ -62,32 +63,40 @@ public class FriendshipService {
     }
 
     @Transactional
-    public void acceptFriendRequest(Long requestId) {
+    public void acceptFriendRequest(String username, Long requestId) {
         FriendshipEntity request = friendshipRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException(Message.FRIEND_REQUEST_NOT_FOUND.toString()));
+        if(!username.equals(request.getAddressee().getUsername()))
+            throw new AccessDeniedException(Message.ACCESS_DENIED_ACCEPT_FRIEND_REQUEST.toString());
         request.setStatus(FriendshipStatus.ACCEPTED);
         friendshipRepository.save(request);
     }
 
     @Transactional
-    public void declineFriendRequest(Long requestId) {
+    public void declineFriendRequest(String username, Long requestId) {
         FriendshipEntity request = friendshipRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException(Message.FRIEND_REQUEST_NOT_FOUND.toString()));
+        if(!username.equals(request.getAddressee().getUsername()))
+            throw new AccessDeniedException(Message.ACCESS_DENIED_DECLINE_FRIEND_REQUEST.toString());
         friendshipRepository.delete(request);
     }
 
     @Transactional
-    public void blockFriendRequest(Long requestId) {
+    public void blockFriendRequest(String username, Long requestId) {
         FriendshipEntity request = friendshipRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException(Message.FRIEND_REQUEST_NOT_FOUND.toString()));
+        if(!username.equals(request.getAddressee().getUsername()))
+            throw new AccessDeniedException(Message.ACCESS_DENIED_BLOCK_FRIEND_REQUEST.toString());
         request.setStatus(FriendshipStatus.BLOCKED);
         friendshipRepository.save(request);
     }
 
     @Transactional
-    public void unblockFriendRequest(Long requestId) {
+    public void unblockFriendRequest(String username, Long requestId) {
         FriendshipEntity request = friendshipRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException(Message.FRIEND_REQUEST_NOT_FOUND.toString()));
+        if(!username.equals(request.getAddressee().getUsername()))
+            throw new AccessDeniedException(Message.ACCESS_DENIED_UNBLOCK_FRIEND_REQUEST.toString());
         friendshipRepository.delete(request);
     }
 
