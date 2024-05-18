@@ -68,7 +68,7 @@ public class AppUserController {
             redirectAttributes.addFlashAttribute("errorMessages", e.getErrors());
             return "redirect:/app-user/change-password";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", Message.PASSWORD_CHANGE_FAILED.toString());
+            redirectAttributes.addFlashAttribute("errorMessage", String.format(Message.PASSWORD_CHANGE_FAILED.toString(), e.getMessage()));
             return "redirect:/app-user/change-password";
         }
         return "redirect:/app-user/change-password";
@@ -92,6 +92,10 @@ public class AppUserController {
             redirectAttributes.addFlashAttribute("successMessage", Message.PROFILE_UPDATE_SUCCESS.toString());
         } catch (ValidationException e) {
             redirectAttributes.addFlashAttribute("errors", e.getErrors());
+            return "redirect:/profile/edit";
+        }
+        catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errors", String.format(Message.PROFILE_UPDATE_FAILED.toString(), e.getMessage()));
             return "redirect:/profile/edit";
         }
         return "redirect:/app-user/edit-profile";

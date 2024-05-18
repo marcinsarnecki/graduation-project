@@ -173,8 +173,10 @@ public class AppUserService implements UserDetailsManager {
         if (!validationErrors.isEmpty())
             throw new ValidationException(validationErrors);
 
-        if (!editProfileRequest.imageUrl().isEmpty())
-            user.setImageUrl(editProfileRequest.imageUrl());
+        if (!editProfileRequest.imageUrl().isEmpty() && editProfileRequest.imageUrl().length() > 255)
+            throw new IllegalArgumentException(Message.IMAGE_URL_TOO_LONG.toString());
+
+        user.setImageUrl(editProfileRequest.imageUrl());
         user.setName(editProfileRequest.name());
         user.setEmail(editProfileRequest.email());
         userEntityRepository.save(user);

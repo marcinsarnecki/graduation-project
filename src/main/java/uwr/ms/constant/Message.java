@@ -9,7 +9,7 @@ public enum Message {
     CURRENT_PASSWORD_INCORRECT("Current password is incorrect."),
     INVALID_OLD_PASSWORD("Invalid old password."),
     PASSWORDS_DONT_MATCH("New password and confirmed new password don't match."),
-    PASSWORD_CHANGE_FAILED("An error occurred while changing the password."),
+    PASSWORD_CHANGE_FAILED("An error occurred while changing the password: %s"),
     PASSWORD_CHANGE_SUCCESS("Password successfully changed."),
     //trip invitations
     ERROR_ACCEPTING_INVITATION("Error accepting invitation: %s"),
@@ -66,8 +66,10 @@ public enum Message {
     TRIP_UPDATED_SUCCESS("Trip updated successfully!"),
     USER_ALREADY_PARTICIPANT("User is already a participant of the trip."),
     //users
+    IMAGE_URL_TOO_LONG("Image URL is longer than 255 characters."),
     INVALID_USER_INSTANCE("User must be an instance of AppUser."),
     PROFILE_UPDATE_SUCCESS("Profile updated successfully."),
+    PROFILE_UPDATE_FAILED("Failed to update profile: %s"),
     REGISTRATION_SUCCESS("Registration successful, you can now log in."),
     USER_ALREADY_EXISTS("User %s already exists."),
     USER_NOT_FOUND("User %s not found.");
