@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import uwr.ms.constant.Message;
 import uwr.ms.model.entity.FriendshipEntity;
 import uwr.ms.model.entity.UserEntity;
 import uwr.ms.service.FriendshipService;
@@ -39,9 +40,9 @@ public class FriendshipController {
         String requesterUsername = principal.getName();
         try {
             friendshipService.sendFriendRequest(requesterUsername, friendUsername);
-            redirectAttributes.addFlashAttribute("successMessage", "Friend request sent successfully to " + friendUsername + "!");
+            redirectAttributes.addFlashAttribute("successMessage", String.format(Message.FRIEND_REQUEST_SENT_SUCCESS.toString(), friendUsername));
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessages", "Failed to send friend request: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessages", String.format(Message.FRIEND_REQUEST_FAILED.toString(), e.getMessage()));
         }
         return "redirect:/friends/add-friend";
     }
@@ -60,9 +61,9 @@ public class FriendshipController {
     public String acceptFriendRequest(@RequestParam("requestId") Long requestId, RedirectAttributes redirectAttributes) {
         try {
             friendshipService.acceptFriendRequest(requestId);
-            redirectAttributes.addFlashAttribute("successMessage", "Friend request accepted successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", Message.FRIEND_REQUEST_ACCEPTED.toString());
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessages", "Failed to accept friend request: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessages", String.format(Message.FRIEND_REQUEST_ACCEPT_FAILED.toString(), e.getMessage()));
         }
         return "redirect:/friends/requests";
     }
@@ -71,9 +72,9 @@ public class FriendshipController {
     public String declineFriendRequest(@RequestParam("requestId") Long requestId, RedirectAttributes redirectAttributes) {
         try {
             friendshipService.declineFriendRequest(requestId);
-            redirectAttributes.addFlashAttribute("successMessage", "Friend request declined.");
+            redirectAttributes.addFlashAttribute("successMessage", Message.FRIEND_REQUEST_DECLINED.toString());
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessages", "Failed to decline friend request: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessages", Message.FRIEND_REQUEST_DECLINE_FAILED + e.getMessage());
         }
         return "redirect:/friends/requests";
     }
@@ -82,9 +83,9 @@ public class FriendshipController {
     public String blockFriendRequest(@RequestParam("requestId") Long requestId, RedirectAttributes redirectAttributes) {
         try {
             friendshipService.blockFriendRequest(requestId);
-            redirectAttributes.addFlashAttribute("successMessage", "Friend request declined.");
+            redirectAttributes.addFlashAttribute("successMessage", Message.FRIEND_REQUEST_BLOCKED.toString());
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessages", "Failed to decline friend request: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessages", String.format(Message.FRIEND_REQUEST_BLOCK_FAILED.toString(), e.getMessage()));
         }
         return "redirect:/friends/requests";
     }
@@ -93,13 +94,13 @@ public class FriendshipController {
     public String unblockRequest(@RequestParam("requestId") Long requestId, RedirectAttributes redirectAttributes) {
         try {
             friendshipService.unblockFriendRequest(requestId);
-            redirectAttributes.addFlashAttribute("successMessage", "User unblocked successfully.");
+            redirectAttributes.addFlashAttribute("successMessage", Message.USER_UNBLOCKED_SUCCESS.toString());
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessages", "Failed to unblock user: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessages", String.format(Message.USER_UNBLOCK_FAILED.toString(), e.getMessage()));
         }
         return "redirect:/friends/requests";
     }
-    
+
     @GetMapping("/my-friends")
     public String getMyFriends(Model model,
                                @RequestParam(name = "page", defaultValue = "0") int page,
@@ -116,10 +117,11 @@ public class FriendshipController {
         String username = principal.getName();
         try {
             friendshipService.deleteFriend(username, friendUsername);
-            redirectAttributes.addFlashAttribute("successMessage", "Successfully unfriended " + friendUsername + ".");
+            redirectAttributes.addFlashAttribute("successMessage", String.format(Message.UNFRIEND_SUCCESS.toString(), friendUsername));
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessages", "Failed to unfriend " + friendUsername + ".");
+            redirectAttributes.addFlashAttribute("errorMessages", String.format(Message.UNFRIEND_FAILED.toString(), friendUsername));
         }
         return "redirect:/friends/my-friends";
     }
 }
+

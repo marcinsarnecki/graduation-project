@@ -22,7 +22,8 @@ public class CustomErrorController implements ErrorController {
         ErrorAttributeOptions options = ErrorAttributeOptions.of(
                 ErrorAttributeOptions.Include.MESSAGE,
                 ErrorAttributeOptions.Include.BINDING_ERRORS,
-                ErrorAttributeOptions.Include.STACK_TRACE
+                ErrorAttributeOptions.Include.STACK_TRACE,
+                ErrorAttributeOptions.Include.EXCEPTION
         );
 
         Map<String, Object> errors = this.errorAttributes.getErrorAttributes(webRequest, options);

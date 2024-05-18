@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import uwr.ms.constant.Message;
 import uwr.ms.controller.ExpensesController;
 import uwr.ms.model.entity.*;
 import uwr.ms.model.repository.*;
@@ -38,7 +39,8 @@ public class ExpensesService {
 
     @Transactional
     public void saveExpense(Long tripId, ExpensesController.ExpenseForm expenseForm) {
-        TripEntity trip = tripRepository.findById(tripId).orElseThrow(() -> new IllegalArgumentException("Invalid trip Id:" + tripId));
+        TripEntity trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new IllegalArgumentException(Message.INVALID_TRIP_ID + String.valueOf(tripId)));
         ExpenseEntity newExpense = new ExpenseEntity();
         newExpense.setTrip(trip);
         newExpense.setTitle(expenseForm.title());
@@ -53,12 +55,12 @@ public class ExpensesService {
         newExpense.setAmount(amountInCents);
 
         UserEntity payer = userRepository.findByUsername(expenseForm.payerUsername())
-                .orElseThrow(() -> new IllegalArgumentException("Payer not found"));
+                .orElseThrow(() -> new IllegalArgumentException(Message.PAYER_NOT_FOUND.toString()));
         newExpense.setPayer(payer);
 
         List<UserEntity> participants = expenseForm.participantUsernames().stream()
                 .map(username -> userRepository.findByUsername(username)
-                        .orElseThrow(() -> new IllegalArgumentException("User not found: " + username))).toList();
+                        .orElseThrow(() -> new IllegalArgumentException(String.format(Message.USER_NOT_FOUND.toString(), username)))).toList();
 
         List<ExpenseParticipantEntity> expenseParticipants = new ArrayList<>();
         for (int i = 0; i < participants.size(); i++) {
@@ -108,9 +110,9 @@ public class ExpensesService {
             BalanceEntity balance = new BalanceEntity();
             balance.setTrip(trip);
             balance.setDebtor(userRepository.findByUsername(debtor.getUsername())
-                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + debtor.getUsername())));
+                    .orElseThrow(() -> new IllegalArgumentException(String.format(Message.USER_NOT_FOUND.toString(), debtor.getUsername()))));
             balance.setCreditor(userRepository.findByUsername(creditor.getUsername())
-                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + creditor.getUsername())));
+                    .orElseThrow(() -> new IllegalArgumentException(String.format(Message.USER_NOT_FOUND.toString(), creditor.getUsername()))));
             balance.setAmount(transferAmount);
             newBalances.add(balance);
 

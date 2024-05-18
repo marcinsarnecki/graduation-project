@@ -5,12 +5,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import uwr.ms.constant.LoginProvider;
-import uwr.ms.exception.UserAlreadyExistsException;
+import uwr.ms.constant.Message;
 import uwr.ms.exception.ValidationException;
 import uwr.ms.model.AppUser;
 import jakarta.validation.Valid;
 import lombok.Value;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,11 +21,12 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/app-user")
-@Log4j2
 @Value
 public class AppUserController {
     AppUserService appUserService;
+
     public record SignUpRequest(String username, String email, String password) {}
+
     @GetMapping("/signup")
     public String getSignUp() {
         return "app-user/signup";
@@ -40,19 +40,18 @@ public class AppUserController {
                     .email(signUpRequest.email())
                     .password(signUpRequest.password())
                     .provider(LoginProvider.APP)
-//                    .attributes()
                     .authorities(List.of(new SimpleGrantedAuthority("STANDARD_USER"))) //TODO enum for authorities
                     .build());
-            redirectAttributes.addFlashAttribute("successMessage", "Registration successful, you can now log in");
+            redirectAttributes.addFlashAttribute("successMessage", Message.REGISTRATION_SUCCESS.toString());
             return "redirect:/login";
         } catch (ValidationException e) {
             redirectAttributes.addFlashAttribute("errorMessages", e.getErrors());
-        }
-        catch (UserAlreadyExistsException e) {
+        } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("errorMessages", e.getMessage());
         }
         return "redirect:/app-user/signup";
     }
+
     public record ChangePasswordRequest(String currentPassword, String newPassword, String confirmNewPassword) {}
 
     @GetMapping("/change-password")
@@ -61,18 +60,17 @@ public class AppUserController {
     }
 
     @PostMapping("/change-password")
-    public String changePassword(@Valid AppUserController.ChangePasswordRequest changePasswordRequest, RedirectAttributes redirectAttributes) {
+    public String changePassword(@Valid ChangePasswordRequest changePasswordRequest, RedirectAttributes redirectAttributes) {
         try {
             appUserService.validateAndChangePassword(changePasswordRequest);
-            redirectAttributes.addFlashAttribute("successMessage", "Password successfully changed");
+            redirectAttributes.addFlashAttribute("successMessage", Message.PASSWORD_CHANGE_SUCCESS.toString());
         } catch (ValidationException e) {
             redirectAttributes.addFlashAttribute("errorMessages", e.getErrors());
             return "redirect:/app-user/change-password";
-        }catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "An error occurred");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", Message.PASSWORD_CHANGE_FAILED.toString());
             return "redirect:/app-user/change-password";
         }
-
         return "redirect:/app-user/change-password";
     }
 
@@ -91,7 +89,7 @@ public class AppUserController {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         try {
             appUserService.updateUserProfile(username, editProfileRequest);
-            redirectAttributes.addFlashAttribute("successMessage", "Profile updated successfully");
+            redirectAttributes.addFlashAttribute("successMessage", Message.PROFILE_UPDATE_SUCCESS.toString());
         } catch (ValidationException e) {
             redirectAttributes.addFlashAttribute("errors", e.getErrors());
             return "redirect:/profile/edit";
@@ -99,3 +97,4 @@ public class AppUserController {
         return "redirect:/app-user/edit-profile";
     }
 }
+

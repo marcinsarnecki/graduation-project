@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uwr.ms.constant.FriendshipStatus;
+import uwr.ms.constant.Message;
 import uwr.ms.model.entity.FriendshipEntity;
 import uwr.ms.model.entity.TripParticipantEntity;
 import uwr.ms.model.entity.UserEntity;
@@ -32,21 +33,21 @@ public class FriendshipService {
     @Transactional
     public void sendFriendRequest(String requesterUsername, String addresseeUsername) {
         UserEntity requester = userEntityRepository.findById(requesterUsername)
-                .orElseThrow(() -> new IllegalArgumentException("Requester not found"));
+                .orElseThrow(() -> new IllegalArgumentException(Message.REQUESTER_NOT_FOUND.toString()));
         UserEntity addressee = userEntityRepository.findById(addresseeUsername)
-                .orElseThrow(() -> new IllegalArgumentException("Addressee not found"));
+                .orElseThrow(() -> new IllegalArgumentException(Message.ADDRESSEE_NOT_FOUND.toString()));
         if(requesterUsername.equals(addresseeUsername))
-            throw new IllegalArgumentException("Can not send friend request to yourself");
+            throw new IllegalArgumentException(Message.CANNOT_FRIEND_YOURSELF.toString());
         if (friendshipRepository.findByRequesterUsernameAndAddresseeUsernameAndStatus(requesterUsername, addresseeUsername, FriendshipStatus.ACCEPTED).isPresent())
-            throw new IllegalStateException("You are already friends");
+            throw new IllegalStateException(Message.ALREADY_FRIENDS.toString());
         if (friendshipRepository.findByRequesterUsernameAndAddresseeUsernameAndStatus(addresseeUsername, requesterUsername, FriendshipStatus.BLOCKED).isPresent())
-            throw new IllegalStateException(String.format("You blocked user %s", addresseeUsername));
+            throw new IllegalStateException(String.format(Message.BLOCKED_BY_YOU.toString(), addresseeUsername));
         if (friendshipRepository.findByRequesterUsernameAndAddresseeUsernameAndStatus(requesterUsername, addresseeUsername, FriendshipStatus.BLOCKED).isPresent())
-            throw new IllegalStateException(String.format("User %s blocked your friend requests", addresseeUsername));
+            throw new IllegalStateException(String.format(Message.BLOCKED_BY_USER.toString(), addresseeUsername));
         if (friendshipRepository.findByRequesterUsernameAndAddresseeUsernameAndStatus(requesterUsername, addresseeUsername, FriendshipStatus.REQUESTED).isPresent())
-            throw new IllegalStateException(String.format("Friend request already sent to %s", addresseeUsername));
+            throw new IllegalStateException(String.format(Message.REQUEST_ALREADY_SENT.toString(), addresseeUsername));
         if (friendshipRepository.findByRequesterUsernameAndAddresseeUsernameAndStatus(addresseeUsername, requesterUsername, FriendshipStatus.REQUESTED).isPresent())
-            throw new IllegalStateException(String.format("User %s already sent friend request to you", addresseeUsername));
+            throw new IllegalStateException(String.format(Message.REQUEST_ALREADY_RECEIVED.toString(), addresseeUsername));
 
         FriendshipEntity friendRequest = new FriendshipEntity();
         friendRequest.setRequester(requester);
@@ -63,7 +64,7 @@ public class FriendshipService {
     @Transactional
     public void acceptFriendRequest(Long requestId) {
         FriendshipEntity request = friendshipRepository.findById(requestId)
-                .orElseThrow(() -> new IllegalArgumentException("Friend request not found"));
+                .orElseThrow(() -> new IllegalArgumentException(Message.FRIEND_REQUEST_NOT_FOUND.toString()));
         request.setStatus(FriendshipStatus.ACCEPTED);
         friendshipRepository.save(request);
     }
@@ -71,14 +72,14 @@ public class FriendshipService {
     @Transactional
     public void declineFriendRequest(Long requestId) {
         FriendshipEntity request = friendshipRepository.findById(requestId)
-                .orElseThrow(() -> new IllegalArgumentException("Friend request not found"));
+                .orElseThrow(() -> new IllegalArgumentException(Message.FRIEND_REQUEST_NOT_FOUND.toString()));
         friendshipRepository.delete(request);
     }
 
     @Transactional
     public void blockFriendRequest(Long requestId) {
         FriendshipEntity request = friendshipRepository.findById(requestId)
-                .orElseThrow(() -> new IllegalArgumentException("Friend request not found"));
+                .orElseThrow(() -> new IllegalArgumentException(Message.FRIEND_REQUEST_NOT_FOUND.toString()));
         request.setStatus(FriendshipStatus.BLOCKED);
         friendshipRepository.save(request);
     }
@@ -86,7 +87,7 @@ public class FriendshipService {
     @Transactional
     public void unblockFriendRequest(Long requestId) {
         FriendshipEntity request = friendshipRepository.findById(requestId)
-                .orElseThrow(() -> new IllegalArgumentException("Friend request not found"));
+                .orElseThrow(() -> new IllegalArgumentException(Message.FRIEND_REQUEST_NOT_FOUND.toString()));
         friendshipRepository.delete(request);
     }
 
@@ -124,6 +125,8 @@ public class FriendshipService {
         Optional<FriendshipEntity> friendship = friendshipRepository.findByRequesterUsernameAndAddresseeUsernameAndStatus(requesterUsername, friendUsername, FriendshipStatus.ACCEPTED);
         if (friendship.isEmpty())
             friendship = friendshipRepository.findByRequesterUsernameAndAddresseeUsernameAndStatus(friendUsername, requesterUsername, FriendshipStatus.ACCEPTED);
+        if (friendship.isEmpty())
+            throw new RuntimeException();
         friendship.ifPresent(friendshipRepository::delete);
     }
 }

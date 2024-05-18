@@ -2,6 +2,7 @@ package uwr.ms.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import uwr.ms.constant.LoginProvider;
+import uwr.ms.constant.Message;
 import uwr.ms.constant.TripParticipantRole;
 import uwr.ms.controller.AppUserController;
 import org.springframework.context.annotation.Bean;
@@ -17,7 +18,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uwr.ms.exception.UserAlreadyExistsException;
 import uwr.ms.exception.ValidationException;
 import uwr.ms.model.entity.AuthorityEntity;
 import uwr.ms.model.entity.TripEntity;
@@ -50,10 +50,6 @@ public class AppUserService implements UserDetailsManager {
         this.tripEntityRepository = tripEntityRepository;
     }
 
-    public UserEntity findUserEntityByUsername(String username) {
-        return userEntityRepository.findById(username).orElseThrow(() -> new RuntimeException("User not found"));
-    }
-
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) {
@@ -69,9 +65,8 @@ public class AppUserService implements UserDetailsManager {
                         .provider(ue.getProvider())
                         .authorities(ue.getUserAuthorities().stream().map(auth -> new SimpleGrantedAuthority(auth.getAuthority().getName())).toList())
                         .build())
-                .orElseThrow(() -> new UsernameNotFoundException(String.format("%s not found", username)));
+                .orElseThrow(() -> new UsernameNotFoundException(String.format(Message.USER_NOT_FOUND.toString(), username)));
     }
-
 
     @Bean
     public OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2LoginHandler() {
@@ -96,11 +91,11 @@ public class AppUserService implements UserDetailsManager {
 
     @Transactional
     public void createUser(AppUser user) {
-        if(LoginProvider.GITHUB.equals(user.getProvider()) && userExists(user.getUsername())) //no throw with github user as this method is called every time github user logs in
+        if (LoginProvider.GITHUB.equals(user.getProvider()) && userExists(user.getUsername())) // no throw with github user as this method is called every time github user logs in
             return;
-        if(LoginProvider.APP.equals(user.getProvider())) {
-            if(userExists(user.getUsername())) //throw because method shouldn't be called with normal user when they already exists
-                throw new UserAlreadyExistsException(String.format("User %s already exists",  user.getUsername()));
+        if (LoginProvider.APP.equals(user.getProvider())) {
+            if (userExists(user.getUsername())) // throw because method shouldn't be called with normal user when they already exist
+                throw new RuntimeException(String.format(Message.USER_ALREADY_EXISTS.toString(), user.getUsername()));
             List<String> validationErrors = new ArrayList<>();
             validationErrors.addAll(ValidationUtils.validatePassword(user.getPassword()));
             validationErrors.addAll(ValidationUtils.validateEmail(user.getEmail()));
@@ -109,7 +104,7 @@ public class AppUserService implements UserDetailsManager {
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         UserEntity entity = saveUserIfNotExists(user);
-        if(user.getAuthorities() != null) {
+        if (user.getAuthorities() != null) {
             List<AuthorityEntity> authorityEntityList = user.getAuthorities().stream().map(auth -> saveAuthorityIfNotExists(auth.getAuthority(), user.getProvider())).toList();
             entity.mergeAuthorities(authorityEntityList);
         }
@@ -117,7 +112,8 @@ public class AppUserService implements UserDetailsManager {
     }
 
     private AuthorityEntity saveAuthorityIfNotExists(String authority, LoginProvider provider) {
-        return authorityEntityRepository.findByName(authority).orElseGet(() -> authorityEntityRepository.save(new AuthorityEntity(authority, provider)));
+        return authorityEntityRepository.findByName(authority)
+                .orElseGet(() -> authorityEntityRepository.save(new AuthorityEntity(authority, provider)));
     }
 
     private UserEntity saveUserIfNotExists(AppUser user) {
@@ -131,18 +127,16 @@ public class AppUserService implements UserDetailsManager {
                                 user.getName(),
                                 user.getProvider(),
                                 user.getImageUrl()
-                        )))
-                ;
+                        )));
     }
 
     @Override
     public void createUser(UserDetails user) {
         if (!(user instanceof AppUser appUser)) {
-            throw new IllegalArgumentException("User must be an instance of AppUser");
+            throw new IllegalArgumentException(Message.INVALID_USER_INSTANCE.toString());
         }
         createUser(appUser);
     }
-
 
     @Override
     public void updateUser(UserDetails user) {
@@ -153,13 +147,12 @@ public class AppUserService implements UserDetailsManager {
     @Transactional
     public void deleteUser(String username) {
         UserEntity user = userEntityRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException(String.format(Message.USER_NOT_FOUND.toString(), username)));
         List<TripParticipantEntity> ownedTripParticipants = tripParticipantEntityRepository.findByUserAndRole(user, TripParticipantRole.OWNER);
         for (TripParticipantEntity ownedParticipant : ownedTripParticipants) {
             TripEntity trip = ownedParticipant.getTrip();
             trip.getParticipants().clear();
             tripEntityRepository.save(trip);
-
             tripEntityRepository.delete(trip);
         }
         userEntityRepository.delete(user);
@@ -173,13 +166,14 @@ public class AppUserService implements UserDetailsManager {
 
     @Transactional
     public void updateUserProfile(String username, AppUserController.EditProfileRequest editProfileRequest) {
-        UserEntity user = userEntityRepository.findById(username).orElseThrow(() -> new RuntimeException("User not found"));
+        UserEntity user = userEntityRepository.findById(username)
+                .orElseThrow(() -> new RuntimeException(String.format(Message.USER_NOT_FOUND.toString(), username)));
 
         List<String> validationErrors = new ArrayList<>(ValidationUtils.validateEmail(editProfileRequest.email()));
         if (!validationErrors.isEmpty())
             throw new ValidationException(validationErrors);
 
-        if(!editProfileRequest.imageUrl().isEmpty())
+        if (!editProfileRequest.imageUrl().isEmpty())
             user.setImageUrl(editProfileRequest.imageUrl());
         user.setName(editProfileRequest.name());
         user.setEmail(editProfileRequest.email());
@@ -196,9 +190,9 @@ public class AppUserService implements UserDetailsManager {
     @Transactional
     public void changePassword(String username, String oldPassword, String newPassword) {
         UserEntity user = userEntityRepository.findById(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException(String.format(Message.USER_NOT_FOUND.toString(), username)));
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            throw new IllegalArgumentException("Invalid old password");
+            throw new IllegalArgumentException(Message.INVALID_OLD_PASSWORD.toString());
         }
         user.setPassword(passwordEncoder.encode(newPassword));
         userEntityRepository.save(user);
@@ -206,15 +200,16 @@ public class AppUserService implements UserDetailsManager {
 
     public void validateAndChangePassword(AppUserController.ChangePasswordRequest changePasswordRequest) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        UserEntity user = userEntityRepository.findById(username).orElseThrow(() -> new RuntimeException("User not found"));
+        UserEntity user = userEntityRepository.findById(username)
+                .orElseThrow(() -> new RuntimeException(String.format(Message.USER_NOT_FOUND.toString(), username)));
 
         List<String> validationErrors = new ArrayList<>();
 
         if (!changePasswordRequest.newPassword().equals(changePasswordRequest.confirmNewPassword()))
-            validationErrors.add("New password and confirmed new password don't match");
+            validationErrors.add(Message.PASSWORDS_DONT_MATCH.toString());
 
         if (!passwordEncoder.matches(changePasswordRequest.currentPassword(), user.getPassword()))
-            validationErrors.add("Current password is incorrect");
+            validationErrors.add(Message.CURRENT_PASSWORD_INCORRECT.toString());
 
         validationErrors.addAll(ValidationUtils.validatePassword(changePasswordRequest.newPassword()));
 
@@ -224,3 +219,4 @@ public class AppUserService implements UserDetailsManager {
         changePassword(username, changePasswordRequest.currentPassword(), changePasswordRequest.newPassword());
     }
 }
+

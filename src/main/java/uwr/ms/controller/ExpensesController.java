@@ -8,6 +8,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import uwr.ms.constant.Currency;
+import uwr.ms.constant.Message;
 import uwr.ms.model.entity.*;
 import uwr.ms.service.ExpensesService;
 import uwr.ms.service.TripService;
@@ -33,11 +34,11 @@ public class ExpensesController {
         TripEntity trip;
         try {
             trip = tripService.findTripById(tripId)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid trip Id:" + tripId));
+                    .orElseThrow(() -> new IllegalArgumentException(Message.INVALID_TRIP_ID + String.valueOf(tripId)));
             boolean isParticipant = trip.getParticipants().stream()
                     .anyMatch(participant -> participant.getUser().getUsername().equals(username));
             if (!isParticipant) {
-                throw new AccessDeniedException("You are not participant of this trip.");
+                throw new AccessDeniedException(Message.TRIP_NOT_PARTICIPANT.toString());
             }
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessages", e.getMessage());
@@ -88,7 +89,7 @@ public class ExpensesController {
     public String addExpense(@PathVariable("tripId") Long tripId, @ModelAttribute ExpenseForm expenseForm, RedirectAttributes redirectAttributes, Model model) {
         try {
             expensesService.saveExpense(tripId, expenseForm);
-            redirectAttributes.addFlashAttribute("successMessage", "Expense added successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", Message.EXPENSE_ADDED_SUCCESS.toString());
             return "redirect:/trips/expenses/" + tripId;
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessages", e.getMessage());

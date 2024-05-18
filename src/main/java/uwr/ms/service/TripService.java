@@ -7,6 +7,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uwr.ms.constant.EventType;
+import uwr.ms.constant.Message;
 import uwr.ms.constant.TripParticipantRole;
 import uwr.ms.dto.TripDTO;
 import uwr.ms.model.entity.*;
@@ -37,11 +38,9 @@ public class TripService {
     @Transactional
     public void createTrip(TripEntity trip, String ownerUsername) {
         UserEntity owner = userRepository.findByUsername(ownerUsername)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
-        if (tripRepository.existsByNameAndOwnerUsername(trip.getName(), ownerUsername)) {
-            throw new IllegalStateException("You already have a trip with the same name");
-        }
+                .orElseThrow(() -> new IllegalArgumentException(String.format(Message.USER_NOT_FOUND.toString(), ownerUsername)));
+        if (tripRepository.existsByNameAndOwnerUsername(trip.getName(), ownerUsername))
+            throw new IllegalStateException(Message.TRIP_NAME_EXISTS.toString());
         TripParticipantEntity ownerParticipant = new TripParticipantEntity();
         ownerParticipant.setUser(owner);
         ownerParticipant.setRole(TripParticipantRole.OWNER);
@@ -74,7 +73,7 @@ public class TripService {
     @Transactional(readOnly = true)
     public boolean isUserOwner(Long tripId, String username) {
         TripEntity trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid Trip ID: " + tripId));
+                .orElseThrow(() -> new IllegalArgumentException(Message.INVALID_TRIP_ID + String.valueOf(tripId)));
         return isUserOwner(trip, username);
     }
 
@@ -84,9 +83,9 @@ public class TripService {
     }
 
     @Transactional
-    public void updateTrip(Long id, TripEntity updatedTrip) {
-        TripEntity trip = tripRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid trip Id:" + id));
+    public void updateTrip(Long tripId, TripEntity updatedTrip) {
+        TripEntity trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new IllegalArgumentException(Message.INVALID_TRIP_ID + String.valueOf(tripId)));
         trip.setName(updatedTrip.getName());
         trip.setStartDate(updatedTrip.getStartDate());
         trip.setLocation(updatedTrip.getLocation());
@@ -97,39 +96,39 @@ public class TripService {
     @Transactional(readOnly = true)
     public Page<TripParticipantEntity> findParticipantsByTrip(Long tripId, Pageable pageable) {
         TripEntity trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid Trip ID: " + tripId));
+                .orElseThrow(() -> new IllegalArgumentException(Message.INVALID_TRIP_ID + String.valueOf(tripId)));
         return tripParticipantEntityRepository.findByTrip(trip, pageable);
     }
 
     @Transactional
     public Set<TripParticipantEntity> findAllParticipantsByTripId(Long tripId) {
         TripEntity trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid Trip ID: " + tripId));
+                .orElseThrow(() -> new IllegalArgumentException(Message.INVALID_TRIP_ID + String.valueOf(tripId)));
         return trip.getParticipants();
     }
 
     @Transactional
     public void sendTripInvitation(Long tripId, String receiverUsername, String senderUsername) {
         TripEntity trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException("Trip not found"));
+                .orElseThrow(() -> new IllegalArgumentException(Message.TRIP_NOT_FOUND.toString()));
         UserEntity invitedUser = userRepository.findByUsername(receiverUsername)
-                .orElseThrow(() -> new IllegalArgumentException("User to invite not found"));
+                .orElseThrow(() -> new IllegalArgumentException(Message.USER_TO_INVITE_NOT_FOUND.toString()));
         UserEntity invitingUser = userRepository.findByUsername(senderUsername)
-                .orElseThrow(() -> new IllegalArgumentException("Inviting user not found"));
+                .orElseThrow(() -> new IllegalArgumentException(Message.INVITING_USER_NOT_FOUND.toString()));
 
         if (!isUserOwner(trip, senderUsername)) {
-            throw new AccessDeniedException("You do not have permission to invite participants to this trip");
+            throw new AccessDeniedException(Message.PERMISSION_DENIED_INVITE.toString());
         }
 
         boolean isAlreadyParticipant = trip.getParticipants().stream()
                 .anyMatch(participant -> participant.getUser().getUsername().equals(receiverUsername));
         if (isAlreadyParticipant) {
-            throw new IllegalStateException("User is already a participant of the trip");
+            throw new IllegalStateException(Message.USER_ALREADY_PARTICIPANT.toString());
         }
 
         boolean isAlreadyInvited = tripInvitationRepository.findByTripAndReceiver(trip, invitedUser).isPresent();
         if (isAlreadyInvited) {
-            throw new IllegalStateException("An invitation has already been sent to this user");
+            throw new IllegalStateException(Message.INVITATION_ALREADY_SENT.toString());
         }
 
         TripInvitationEntity invitation = new TripInvitationEntity();
@@ -142,18 +141,18 @@ public class TripService {
     @Transactional
     public void removeParticipant(Long tripId, Long participantId, String username) {
         TripEntity trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException("Trip not found"));
+                .orElseThrow(() -> new IllegalArgumentException(Message.TRIP_NOT_FOUND.toString()));
         TripParticipantEntity participant = tripParticipantEntityRepository.findById(participantId)
-                .orElseThrow(() -> new IllegalArgumentException("Participant not found"));
+                .orElseThrow(() -> new IllegalArgumentException(Message.PARTICIPANT_NOT_FOUND.toString()));
 
         if (!isUserOwner(trip, username)) {
-            throw new AccessDeniedException("You do not have permission to remove participants from this trip");
+            throw new AccessDeniedException(Message.PERMISSION_DENIED_REMOVE_PARTICIPANT.toString());
         }
 
         if (trip.getParticipants().contains(participant)) {
-            trip.getParticipants().remove(participant);
+            trip.getParticipants().remove(participant);//todo test
         } else {
-            throw new IllegalStateException("Participant is not associated with this trip");
+            throw new IllegalStateException(Message.PARTICIPANT_NOT_ASSOCIATED.toString());
         }
     }
 
@@ -164,14 +163,16 @@ public class TripService {
     @Transactional
     public void acceptInvitation(Long invitationId) {
         TripInvitationEntity invitation = tripInvitationRepository.findById(invitationId)
-                .orElseThrow(() -> new IllegalArgumentException("Invitation not found"));
+                .orElseThrow(() -> new IllegalArgumentException(Message.INVITATION_NOT_FOUND.toString()));
         TripEntity trip = tripRepository.findById(invitation.getTrip().getId())
-                .orElseThrow(() -> new IllegalArgumentException("Trip not found"));
+                .orElseThrow(() -> new IllegalArgumentException(Message.TRIP_NOT_FOUND.toString()));
         UserEntity user = userRepository.findByUsername(invitation.getReceiver().getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException(String.format(Message.USER_NOT_FOUND.toString(), invitation.getReceiver().getUsername())));
+
         boolean participantExists = tripParticipantEntityRepository.findByTripAndUser(trip, user).isPresent();
         if (participantExists)
-            throw new IllegalArgumentException("Participant is already added to this trip");
+            throw new IllegalArgumentException(Message.PARTICIPANT_ALREADY_ADDED.toString());
+
         TripParticipantEntity participant = new TripParticipantEntity();
         participant.setTrip(trip);
         participant.setUser(user);
@@ -183,22 +184,19 @@ public class TripService {
 
     public void declineInvitation(Long invitationId) {
         TripInvitationEntity invitation = tripInvitationRepository.findById(invitationId)
-                .orElseThrow(() -> new IllegalArgumentException("Invitation not found"));
+                .orElseThrow(() -> new IllegalArgumentException(Message.INVITATION_NOT_FOUND.toString()));
         tripInvitationRepository.delete(invitation);
     }
 
     @Transactional
     public void addEventToTrip(EventEntity event, TripEntity trip) {
         if (event.getTime() == null || event.getDate() == null)
-            throw new IllegalArgumentException("Invalid date and time");
+            throw new IllegalArgumentException(Message.INVALID_DATE_TIME.toString());
         if (event.getEventType().equals(EventType.SINGLE) && (event.getLocation() == null || event.getLocation().isEmpty()))
-            throw new IllegalArgumentException("Invalid location");
+            throw new IllegalArgumentException(Message.INVALID_LOCATION.toString());
         if (event.getEventType().equals(EventType.ROUTE) &&
-                (event.getOrigin() == null ||
-                        event.getOrigin().isEmpty() ||
-                        event.getDestination() == null ||
-                        event.getDestination().isEmpty()))
-            throw new IllegalArgumentException("Invalid origin and destination");
+                (event.getOrigin() == null || event.getOrigin().isEmpty() || event.getDestination() == null || event.getDestination().isEmpty()))
+            throw new IllegalArgumentException(Message.INVALID_ORIGIN_DESTINATION.toString());
         if (event.getEventType() == EventType.SINGLE) {
             event.setOrigin(null);
             event.setDestination(null);
@@ -215,13 +213,13 @@ public class TripService {
     @Transactional
     public void deleteEvent(Long tripId, Long eventId, String username) {
         TripEntity trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException("Trip not found"));
+                .orElseThrow(() -> new IllegalArgumentException(Message.TRIP_NOT_FOUND.toString()));
         if (!isUserOwner(trip, username))
-            throw new AccessDeniedException("You do not have permission to edit this trip");
+            throw new AccessDeniedException(Message.EDIT_TRIP_PERMISSION_DENIED.toString());
         EventEntity event = eventEntityRepository.findById(eventId)
-                .orElseThrow(() -> new IllegalArgumentException("Event not found"));
+                .orElseThrow(() -> new IllegalArgumentException(Message.EVENT_NOT_FOUND.toString()));
         if (!event.getTrip().getId().equals(tripId))
-            throw new IllegalArgumentException("Event does not belong to the specified trip");
+            throw new IllegalArgumentException(Message.EVENT_NOT_BELONG_TO_TRIP.toString());
         trip.getEvents().removeIf(e -> e.getId().equals(eventId));
         eventEntityRepository.delete(event);
     }
