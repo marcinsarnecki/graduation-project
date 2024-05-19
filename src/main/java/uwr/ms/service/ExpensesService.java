@@ -16,25 +16,17 @@ public class ExpensesService {
     private final TripEntityRepository tripRepository;
     private final UserEntityRepository userRepository;
     private final ExpenseEntityRepository expenseRepository;
-    private final TripParticipantEntityRepository tripParticipantRepository;
-    private final BalanceEntityRepository balanceRepository;
 
-    public ExpensesService(TripEntityRepository tripRepository, UserEntityRepository userRepository, ExpenseEntityRepository expenseRepository, TripParticipantEntityRepository tripParticipantRepository, BalanceEntityRepository balanceRepository) {
+    public ExpensesService(TripEntityRepository tripRepository, UserEntityRepository userRepository, ExpenseEntityRepository expenseRepository) {
         this.tripRepository = tripRepository;
         this.userRepository = userRepository;
         this.expenseRepository = expenseRepository;
-        this.tripParticipantRepository = tripParticipantRepository;
-        this.balanceRepository = balanceRepository;
     }
 
     public List<ExpenseEntity> findAllExpensesByTripId(Long tripId) {
         List<ExpenseEntity> expenses = expenseRepository.findAllByTripId(tripId);
         expenses.sort(Comparator.comparing(ExpenseEntity::getDate));
         return expenses;
-    }
-
-    public List<BalanceEntity> findAllBalancesByTripId(Long tripId) {
-        return balanceRepository.findAllByTripId(tripId);
     }
 
     @Transactional
@@ -48,9 +40,9 @@ public class ExpensesService {
 
         int amountInCents = expenseForm.amount();
         int summedParticipantAmounts = 0;
-        for(int amount: expenseForm.participantAmounts())
+        for (int amount : expenseForm.participantAmounts())
             summedParticipantAmounts += amount;
-        if(amountInCents != summedParticipantAmounts)
+        if (amountInCents != summedParticipantAmounts)
             amountInCents = summedParticipantAmounts;
         newExpense.setAmount(amountInCents);
 
@@ -70,26 +62,25 @@ public class ExpensesService {
         }
 
         newExpense.setExpenseParticipants(expenseParticipants);
-        updateBalances(trip, newExpense);
         expenseRepository.save(newExpense);
     }
 
-    private void updateBalances(TripEntity trip, ExpenseEntity newExpense) {
-        List<BalanceEntity> balanceEntities = balanceRepository.findAllByTripId(trip.getId());
-        balanceRepository.deleteAllByTripId(trip.getId());
-        List<String> usernames = tripParticipantRepository.findByTripId(trip.getId()).stream().map(TripParticipantEntity::getUser).map(UserEntity::getUsername).toList();
+    public Map<String, Integer> getNetBalanceMap(List<ExpenseEntity> expenses, List<UserEntity> tripParticipants) {
         Map<String, Integer> balances = new HashMap<>();
-        for (String username : usernames) {
-            balances.put(username, 0);
+        for (UserEntity participant : tripParticipants) {
+            balances.put(participant.getUsername(), 0);
         }
-        for (BalanceEntity balance : balanceEntities) {
-            balances.put(balance.getDebtor().getUsername(), balances.get(balance.getDebtor().getUsername()) - balance.getAmount());
-            balances.put(balance.getCreditor().getUsername(), balances.get(balance.getCreditor().getUsername()) + balance.getAmount());
+        for (ExpenseEntity expense : expenses) {
+            balances.put(expense.getPayer().getUsername(), balances.get(expense.getPayer().getUsername()) + expense.getAmount());
+            for (ExpenseParticipantEntity participant : expense.getExpenseParticipants()) {
+                balances.put(participant.getParticipant().getUsername(), balances.get(participant.getParticipant().getUsername()) - participant.getAmount());
+            }
         }
-        balances.put(newExpense.getPayer().getUsername(), balances.get(newExpense.getPayer().getUsername()) + newExpense.getAmount());
-        for (ExpenseParticipantEntity participant : newExpense.getExpenseParticipants()) {
-            balances.put(participant.getParticipant().getUsername(), balances.get(participant.getParticipant().getUsername()) - participant.getAmount());
-        }
+        balances.entrySet().removeIf(entry -> entry.getValue() == 0);
+        return balances;
+    }
+
+    public List<ExpensesController.DebtDto> getDebtDtoList(Map<String, Integer> balances) {
         PriorityQueue<Pair> creditors = new PriorityQueue<>((a, b) -> b.getAmount() - a.getAmount());
         PriorityQueue<Pair> debtors = new PriorityQueue<>((a, b) -> b.getAmount() - a.getAmount());
 
@@ -100,21 +91,16 @@ public class ExpensesService {
                 debtors.offer(new Pair(entry.getKey(), -entry.getValue()));
             }
         }
-        List<BalanceEntity> newBalances = new ArrayList<>();
+
+        List<ExpensesController.DebtDto> debtDtoList = new ArrayList<>();
         while (!creditors.isEmpty() && !debtors.isEmpty()) {
             Pair creditor = creditors.poll();
             Pair debtor = debtors.poll();
 
             int transferAmount = Math.min(creditor.getAmount(), debtor.getAmount());
 
-            BalanceEntity balance = new BalanceEntity();
-            balance.setTrip(trip);
-            balance.setDebtor(userRepository.findByUsername(debtor.getUsername())
-                    .orElseThrow(() -> new IllegalArgumentException(String.format(Message.USER_NOT_FOUND.toString(), debtor.getUsername()))));
-            balance.setCreditor(userRepository.findByUsername(creditor.getUsername())
-                    .orElseThrow(() -> new IllegalArgumentException(String.format(Message.USER_NOT_FOUND.toString(), creditor.getUsername()))));
-            balance.setAmount(transferAmount);
-            newBalances.add(balance);
+            ExpensesController.DebtDto debtDto = new ExpensesController.DebtDto(debtor.getUsername(), creditor.getUsername(), transferAmount);
+            debtDtoList.add(debtDto);
 
             if (creditor.getAmount() > debtor.getAmount()) {
                 creditors.offer(new Pair(creditor.getUsername(), creditor.getAmount() - transferAmount));
@@ -122,7 +108,7 @@ public class ExpensesService {
                 debtors.offer(new Pair(debtor.getUsername(), debtor.getAmount() - transferAmount));
             }
         }
-        balanceRepository.saveAll(newBalances);
+        return debtDtoList;
     }
 
     @Data

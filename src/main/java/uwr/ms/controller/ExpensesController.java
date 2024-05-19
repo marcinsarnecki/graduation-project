@@ -52,21 +52,12 @@ public class ExpensesController {
                 .collect(Collectors.toList());
 
         List<ExpenseEntity> expenses = expensesService.findAllExpensesByTripId(tripId);
-        List<BalanceEntity> balances = expensesService.findAllBalancesByTripId(tripId);
-
-        Map<String, Integer> netBalances = new HashMap<>();
-        for (UserEntity participant : tripParticipants) {
-            netBalances.put(participant.getUsername(), 0);
-        }
-        for (BalanceEntity balance : balances) {
-            netBalances.put(balance.getDebtor().getUsername(), netBalances.get(balance.getDebtor().getUsername()) - balance.getAmount());
-            netBalances.put(balance.getCreditor().getUsername(), netBalances.get(balance.getCreditor().getUsername()) + balance.getAmount());
-        }
-        netBalances.entrySet().removeIf(entry -> entry.getValue() == 0);
+        Map<String, Integer> netBalanceMap = expensesService.getNetBalanceMap(expenses, tripParticipants);
+        List<DebtDto> debtDtoList = expensesService.getDebtDtoList(netBalanceMap);
 
         List<UserBalanceDTO> userBalanceDTOs = tripParticipants.stream()
-                .filter(participant -> netBalances.containsKey(participant.getUsername()))
-                .map(participant -> new UserBalanceDTO(participant.getUsername(), participant.getName(), netBalances.get(participant.getUsername()))).toList();
+                .filter(participant -> netBalanceMap.containsKey(participant.getUsername()))
+                .map(participant -> new UserBalanceDTO(participant.getUsername(), participant.getName(), netBalanceMap.get(participant.getUsername()))).toList();
 
         int maxBalance = userBalanceDTOs.stream()
                 .mapToInt(UserBalanceDTO::balance)
@@ -79,7 +70,7 @@ public class ExpensesController {
         model.addAttribute("trip", trip);
         model.addAttribute("tripParticipants", tripParticipants);
         model.addAttribute("currencies", Arrays.asList(Currency.values()));
-        model.addAttribute("balances", balances);
+        model.addAttribute("debts", debtDtoList);
         model.addAttribute("netBalances", userBalanceDTOs);
 
         return "expenses/expenses";
@@ -99,4 +90,5 @@ public class ExpensesController {
 
     public record ExpenseForm(String title, Integer amount, String currency, LocalDate date, String payerUsername, List<String> participantUsernames, List<Integer> participantAmounts) {}
     public record UserBalanceDTO(String username, String name, int balance) {}
+    public record DebtDto(String debtorUsername, String creditorUsername, int amount) {};
 }

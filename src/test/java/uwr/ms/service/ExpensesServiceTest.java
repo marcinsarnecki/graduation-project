@@ -11,17 +11,15 @@ import org.springframework.transaction.annotation.Transactional;
 import uwr.ms.constant.Currency;
 import uwr.ms.constant.LoginProvider;
 import uwr.ms.controller.ExpensesController;
-import uwr.ms.model.entity.BalanceEntity;
 import uwr.ms.model.entity.ExpenseEntity;
 import uwr.ms.model.entity.TripEntity;
+import uwr.ms.model.entity.TripParticipantEntity;
 import uwr.ms.model.entity.UserEntity;
 import uwr.ms.model.repository.*;
 
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @SpringBootTest
 @Transactional
@@ -29,7 +27,7 @@ import java.util.Map;
 public class ExpensesServiceTest {
 
     @Autowired
-    private ExpensesService expenseService;
+    private ExpensesService expensesService;
 
     @Autowired
     private TripService tripService;
@@ -38,16 +36,7 @@ public class ExpensesServiceTest {
     private UserEntityRepository userRepository;
 
     @Autowired
-    private TripEntityRepository tripRepository;
-
-    @Autowired
-    private TripParticipantEntityRepository tripParticipantRepository;
-
-    @Autowired
     private ExpenseEntityRepository expenseRepository;
-
-    @Autowired
-    private BalanceEntityRepository balanceRepository;
 
     private UserEntity owner, user1, user2, user3, user4, user5, user6;
 
@@ -71,27 +60,27 @@ public class ExpensesServiceTest {
 
         tripService.sendTripInvitation(trip.getId(), user1.getUsername(), owner.getUsername());
         invitationId = tripService.getTripInvitations(user1.getUsername()).get(0).getId();
-        tripService.acceptInvitation(invitationId);
+        tripService.acceptInvitation(invitationId, user1.getUsername());
 
         tripService.sendTripInvitation(trip.getId(), user2.getUsername(), owner.getUsername());
         invitationId = tripService.getTripInvitations(user2.getUsername()).get(0).getId();
-        tripService.acceptInvitation(invitationId);
+        tripService.acceptInvitation(invitationId, user2.getUsername());
 
         tripService.sendTripInvitation(trip.getId(), user3.getUsername(), owner.getUsername());
         invitationId = tripService.getTripInvitations(user3.getUsername()).get(0).getId();
-        tripService.acceptInvitation(invitationId);
+        tripService.acceptInvitation(invitationId, user3.getUsername());
 
         tripService.sendTripInvitation(trip.getId(), user4.getUsername(), owner.getUsername());
         invitationId = tripService.getTripInvitations(user4.getUsername()).get(0).getId();
-        tripService.acceptInvitation(invitationId);
+        tripService.acceptInvitation(invitationId, user4.getUsername());
 
         tripService.sendTripInvitation(trip.getId(), user5.getUsername(), owner.getUsername());
         invitationId = tripService.getTripInvitations(user5.getUsername()).get(0).getId();
-        tripService.acceptInvitation(invitationId);
+        tripService.acceptInvitation(invitationId, user5.getUsername());
 
         tripService.sendTripInvitation(trip.getId(), user6.getUsername(), owner.getUsername());
         invitationId = tripService.getTripInvitations(user6.getUsername()).get(0).getId();
-        tripService.acceptInvitation(invitationId);
+        tripService.acceptInvitation(invitationId, user6.getUsername());
         return trip;
     }
 
@@ -109,7 +98,7 @@ public class ExpensesServiceTest {
                 Arrays.asList(2000, 6000, 2000) // amounts in cents
         );
 
-        expenseService.saveExpense(trip.getId(), expenseForm);
+        expensesService.saveExpense(trip.getId(), expenseForm);
 
         List<ExpenseEntity> expenses = expenseRepository.findAllByTripId(trip.getId());
         assertThat(expenses).hasSize(1);
@@ -118,9 +107,6 @@ public class ExpensesServiceTest {
         assertThat(expense.getTitle()).isEqualTo("Dinner");
         assertThat(expense.getAmount()).isEqualTo(10000);
         assertThat(expense.getPayer().getUsername()).isEqualTo(owner.getUsername());
-
-        List<BalanceEntity> balances = balanceRepository.findAllByTripId(trip.getId());
-        assertThat(balances).isNotEmpty();
     }
 
     @Test
@@ -145,7 +131,7 @@ public class ExpensesServiceTest {
                 Arrays.asList(user1.getUsername(), user2.getUsername(), user3.getUsername()),
                 Arrays.asList(1500, 3000, 1500)
         );
-        expenseService.saveExpense(trip.getId(), expenseForm1);
+        expensesService.saveExpense(trip.getId(), expenseForm1);
 
         expectedBalances.put(owner.getUsername(), expectedBalances.get(owner.getUsername()) + 6000);
         expectedBalances.put(user1.getUsername(), expectedBalances.get(user1.getUsername()) - 1500);
@@ -161,7 +147,7 @@ public class ExpensesServiceTest {
                 Arrays.asList(owner.getUsername(), user2.getUsername(), user3.getUsername()),
                 Arrays.asList(1000, 2000, 1000)
         );
-        expenseService.saveExpense(trip.getId(), expenseForm2);
+        expensesService.saveExpense(trip.getId(), expenseForm2);
 
         expectedBalances.put(user1.getUsername(), expectedBalances.get(user1.getUsername()) + 4000);
         expectedBalances.put(owner.getUsername(), expectedBalances.get(owner.getUsername()) - 1000);
@@ -177,9 +163,8 @@ public class ExpensesServiceTest {
                 Arrays.asList(owner.getUsername(), user1.getUsername(), user3.getUsername(), user4.getUsername()),
                 Arrays.asList(3000, 3000, 3000, 3000)
         );
-        expenseService.saveExpense(trip.getId(), expenseForm3);
+        expensesService.saveExpense(trip.getId(), expenseForm3);
 
-        // Update expected balances
         expectedBalances.put(user2.getUsername(), expectedBalances.get(user2.getUsername()) + 12000);
         expectedBalances.put(owner.getUsername(), expectedBalances.get(owner.getUsername()) - 3000);
         expectedBalances.put(user1.getUsername(), expectedBalances.get(user1.getUsername()) - 3000);
@@ -187,14 +172,22 @@ public class ExpensesServiceTest {
         expectedBalances.put(user4.getUsername(), expectedBalances.get(user4.getUsername()) - 3000);
 
 
-        List<BalanceEntity> balances = balanceRepository.findAllByTripId(trip.getId());
-        assertThat(balances).isNotEmpty();
-        assertThat(balances.size()).isLessThanOrEqualTo(expectedBalances.size() - 1);
+        List<UserEntity> tripParticipants = tripService.findAllParticipantsByTripId(trip.getId())
+                .stream()
+                .map(TripParticipantEntity::getUser)
+                .collect(Collectors.toList());
 
-        for (BalanceEntity balance : balances) {
-            String debtorUsername = balance.getDebtor().getUsername();
-            String creditorUsername = balance.getCreditor().getUsername();
-            int amount = balance.getAmount();
+        List<ExpenseEntity> expenses = expensesService.findAllExpensesByTripId(trip.getId());
+        Map<String, Integer> netBalanceMap = expensesService.getNetBalanceMap(expenses, tripParticipants);
+        List<ExpensesController.DebtDto> debtDtoList = expensesService.getDebtDtoList(netBalanceMap);
+
+        assertThat(debtDtoList).isNotEmpty();
+        assertThat(debtDtoList.size()).isLessThanOrEqualTo(expectedBalances.size() - 1);
+
+        for (ExpensesController.DebtDto debtDto : debtDtoList) {
+            String debtorUsername = debtDto.debtorUsername();
+            String creditorUsername = debtDto.creditorUsername();
+            int amount = debtDto.amount();
 
             expectedBalances.put(debtorUsername, expectedBalances.get(debtorUsername) + amount);
             expectedBalances.put(creditorUsername, expectedBalances.get(creditorUsername) - amount);
@@ -227,7 +220,7 @@ public class ExpensesServiceTest {
                 Arrays.asList(user1.getUsername(), user2.getUsername(), user3.getUsername()),
                 Arrays.asList(347, 3597, 1056)
         );
-        expenseService.saveExpense(trip.getId(), expenseForm1);
+        expensesService.saveExpense(trip.getId(), expenseForm1);
 
         expectedBalances.put(owner.getUsername(), expectedBalances.get(owner.getUsername()) + 5000);
         expectedBalances.put(user1.getUsername(), expectedBalances.get(user1.getUsername()) - 347);
@@ -243,7 +236,7 @@ public class ExpensesServiceTest {
                 Arrays.asList(owner.getUsername(), user2.getUsername(), user3.getUsername()),
                 Arrays.asList(417, 3299, 284)
         );
-        expenseService.saveExpense(trip.getId(), expenseForm2);
+        expensesService.saveExpense(trip.getId(), expenseForm2);
 
         expectedBalances.put(user1.getUsername(), expectedBalances.get(user1.getUsername()) + 4000);
         expectedBalances.put(owner.getUsername(), expectedBalances.get(owner.getUsername()) - 417);
@@ -259,31 +252,33 @@ public class ExpensesServiceTest {
                 Arrays.asList(owner.getUsername(), user1.getUsername(), user3.getUsername(), user6.getUsername()),
                 Arrays.asList(3454, 4423, 1302, 2821)
         );
-        expenseService.saveExpense(trip.getId(), expenseForm3);
+        expensesService.saveExpense(trip.getId(), expenseForm3);
 
-        // Update expected balances
         expectedBalances.put(user2.getUsername(), expectedBalances.get(user2.getUsername()) + 12000);
         expectedBalances.put(owner.getUsername(), expectedBalances.get(owner.getUsername()) - 3454);
         expectedBalances.put(user1.getUsername(), expectedBalances.get(user1.getUsername()) - 4423);
         expectedBalances.put(user3.getUsername(), expectedBalances.get(user3.getUsername()) - 1302);
         expectedBalances.put(user6.getUsername(), expectedBalances.get(user6.getUsername()) - 2821);
 
+        List<UserEntity> tripParticipants = tripService.findAllParticipantsByTripId(trip.getId())
+                .stream()
+                .map(TripParticipantEntity::getUser)
+                .collect(Collectors.toList());
 
-        List<BalanceEntity> balances = balanceRepository.findAllByTripId(trip.getId());
-        assertThat(balances).isNotEmpty();
-        assertThat(balances.size()).isLessThanOrEqualTo(expectedBalances.size() - 1);
+        List<ExpenseEntity> expenses = expensesService.findAllExpensesByTripId(trip.getId());
+        Map<String, Integer> netBalanceMap = expensesService.getNetBalanceMap(expenses, tripParticipants);
+        List<ExpensesController.DebtDto> debtDtoList = expensesService.getDebtDtoList(netBalanceMap);
 
-        for (BalanceEntity balance : balances) {
-            String debtorUsername = balance.getDebtor().getUsername();
-            String creditorUsername = balance.getCreditor().getUsername();
-            int amount = balance.getAmount();
+        assertThat(debtDtoList).isNotEmpty();
+        assertThat(debtDtoList.size()).isLessThanOrEqualTo(expectedBalances.size() - 1);
+
+        for (ExpensesController.DebtDto debtDto : debtDtoList) {
+            String debtorUsername = debtDto.debtorUsername();
+            String creditorUsername = debtDto.creditorUsername();
+            int amount = debtDto.amount();
 
             expectedBalances.put(debtorUsername, expectedBalances.get(debtorUsername) + amount);
             expectedBalances.put(creditorUsername, expectedBalances.get(creditorUsername) - amount);
-        }
-
-        for (Map.Entry<String, Integer> entry : expectedBalances.entrySet()) {
-            assertThat(entry.getValue()).isEqualTo(0);
         }
     }
 

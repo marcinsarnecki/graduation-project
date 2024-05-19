@@ -125,7 +125,7 @@ public class TripServiceTest {
         tripService.sendTripInvitation(trip.getId(), user1.getUsername(), owner.getUsername());
         Long invitationId = tripService.getTripInvitations(user1.getUsername()).get(0).getId();
 
-        tripService.acceptInvitation(invitationId);
+        tripService.acceptInvitation(invitationId, user1.getUsername());
 
         boolean isParticipant = tripParticipantRepository.findByTripAndUser(trip, user1).isPresent();
         assertThat(isParticipant).isTrue();
@@ -140,7 +140,7 @@ public class TripServiceTest {
         tripService.sendTripInvitation(trip.getId(), user1.getUsername(), owner.getUsername());
         Long invitationId = tripService.getTripInvitations(user1.getUsername()).get(0).getId();
 
-        tripService.declineInvitation(invitationId);
+        tripService.declineInvitation(invitationId, user1.getUsername());
 
         assertThat(tripService.getTripInvitations(user1.getUsername())).isEmpty();
     }
@@ -153,7 +153,7 @@ public class TripServiceTest {
 
         tripService.sendTripInvitation(trip.getId(), user1.getUsername(), owner.getUsername());
         Long invitationId = tripService.getTripInvitations(user1.getUsername()).get(0).getId();
-        tripService.acceptInvitation(invitationId);
+        tripService.acceptInvitation(invitationId, user1.getUsername());
 
         Set<TripParticipantEntity> initialParticipants = tripService.findAllParticipantsByTripId(trip.getId());
         assertThat(initialParticipants).hasSize(2);
@@ -178,7 +178,7 @@ public class TripServiceTest {
 
         tripService.sendTripInvitation(trip.getId(), user1.getUsername(), owner.getUsername());
         Long invitationId = tripService.getTripInvitations(user1.getUsername()).get(0).getId();
-        tripService.acceptInvitation(invitationId);
+        tripService.acceptInvitation(invitationId, user1.getUsername());
 
         TripParticipantEntity participant = tripService.findAllParticipantsByTripId(trip.getId()).stream()
                 .filter(p -> p.getUser().getUsername().equals(user1.getUsername()))

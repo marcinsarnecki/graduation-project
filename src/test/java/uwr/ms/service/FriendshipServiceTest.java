@@ -78,7 +78,7 @@ public class FriendshipServiceTest {
         friendship.setStatus(FriendshipStatus.REQUESTED);
         friendshipRepository.save(friendship);
 
-        friendshipService.acceptFriendRequest(friendship.getId());
+        friendshipService.acceptFriendRequest(addressee.getUsername(), friendship.getId());
 
         FriendshipEntity updatedFriendship = friendshipRepository.findById(friendship.getId()).orElse(null);
         assertThat(updatedFriendship).isNotNull();
@@ -93,7 +93,7 @@ public class FriendshipServiceTest {
         friendship.setStatus(FriendshipStatus.REQUESTED);
         friendshipRepository.save(friendship);
 
-        friendshipService.declineFriendRequest(friendship.getId());
+        friendshipService.declineFriendRequest(addressee.getUsername(), friendship.getId());
 
         assertThat(friendshipRepository.findById(friendship.getId())).isEmpty();
     }
