@@ -35,6 +35,7 @@ public enum Message {
     EXPENSE_DELETED_SUCCESSFULLY("Expense deleted successfully!"),
     EXPENSE_DELETE_FAILED("Failed to delete expense: %s"),
     PAYER_NOT_FOUND("Payer not found"),
+    INVALID_AMOUNT("Amount must be greater than 0.00"),
     //friend requests
     FRIEND_REQUEST_ACCEPTED("Friend request accepted successfully!"),
     FRIEND_REQUEST_ACCEPT_FAILED("Failed to accept friend request: %s"),

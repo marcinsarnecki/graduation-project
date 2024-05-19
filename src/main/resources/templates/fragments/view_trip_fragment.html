@@ -45,10 +45,16 @@
                                         <p class="card-text" th:text="${participants.size()}">Number of Participants</p>
                                     </div>
                                 </div>
-                                <div class="card">
+                                <div class="card mb-2">
                                     <div class="card-body">
                                         <h6 class="card-title">Number of Events</h6>
                                         <p class="card-text" th:text="${events.size()}">Number of Events</p>
+                                    </div>
+                                </div>
+                                <div class="card mb-2">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Currency</h6>
+                                        <p class="card-text" th:text="${trip.defaultCurrency.name()} + ' - ' + ${trip.defaultCurrency.getDescription()}">Currency</p>
                                     </div>
                                 </div>
                             </div>

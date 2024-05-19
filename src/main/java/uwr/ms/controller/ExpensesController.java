@@ -85,9 +85,10 @@ public class ExpensesController {
                     .orElseThrow(() -> new IllegalArgumentException(String.format(Message.INVALID_TRIP_ID.toString(), tripId)));
             boolean isParticipant = trip.getParticipants().stream()
                     .anyMatch(participant -> participant.getUser().getUsername().equals(username));
-            if (!isParticipant) {
+            if (!isParticipant)
                 throw new AccessDeniedException(Message.TRIP_NOT_PARTICIPANT.toString());
-            }
+            if(expenseForm.amount() <= 0)
+                throw new IllegalArgumentException(Message.INVALID_AMOUNT.toString());
             expensesService.saveExpense(tripId, expenseForm);
             redirectAttributes.addFlashAttribute("successMessage", Message.EXPENSE_ADDED_SUCCESS.toString());
             return "redirect:/trips/expenses/" + tripId;
@@ -116,7 +117,7 @@ public class ExpensesController {
         return "redirect:/trips/expenses/" + tripId;
     }
 
-    public record ExpenseForm(String title, Integer amount, String currency, LocalDate date, String payerUsername, List<String> participantUsernames, List<Integer> participantAmounts) {}
+    public record ExpenseForm(String title, Integer amount, LocalDate date, String payerUsername, List<String> participantUsernames, List<Integer> participantAmounts) {}
     public record UserBalanceDTO(String username, String name, int balance) {}
     public record DebtDto(String debtorUsername, String creditorUsername, int amount) {};
 }

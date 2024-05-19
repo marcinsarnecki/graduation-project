@@ -171,7 +171,7 @@
                                         <div class="col-md-4 mb-3">
                                             <label for="amount">Amount:</label>
                                             <input type="number" class="form-control" id="amount" name="amount"
-                                                   placeholder="Enter amount" step="0.01" required>
+                                                   placeholder="Enter amount" step="0.01" min="0.01" required>
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label for="date">Date:</label>
@@ -181,16 +181,8 @@
 
                                     <div class="row">
                                         <div class="col-md-4 mb-3">
-                                            <label for="currencySelector">Currency:</label>
-                                            <select class="form-control" id="currencySelector" name="currency" required>
-                                                <option value="">Select a currency</option>
-                                                <option th:each="currency : ${currencies}"
-                                                        th:value="${currency.name()}"
-                                                        th:text="${currency.name()} + ' - ' + ${currency.getDescription()}"
-                                                        th:selected="${currency.name()} == '__${trip.defaultCurrency}__'">
-                                                    Currency
-                                                </option>
-                                            </select>
+                                            <label for="currency">Currency:</label>
+                                            <input type="text" class="form-control" id="currency" name="currency" th:value="${trip.defaultCurrency}" style="background-color: #ffffff !important;" readonly>
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label for="payer">Paid By:</label>

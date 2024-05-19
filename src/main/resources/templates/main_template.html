@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${title}">Default Title</title>
     <th:block th:replace="~{fragments/bootstrap_fragment::bootstrap-head}"></th:block>
-    <link href="/css/main_template.css" rel="stylesheet">
+    <link href="/css/common.css" rel="stylesheet">
     <link th:if="${css != null}" th:href="@{${css}}" rel="stylesheet"/>
     <script th:if="${script != null}" th:src="@{${script}}" defer></script>
     <meta name="csrf-token" th:content="${_csrf.token}"/>

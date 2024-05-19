@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import jakarta.persistence.*;
+import uwr.ms.constant.Currency;
 
 @Entity
 @Table(name = "trips")
@@ -34,7 +35,8 @@ public class TripEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column
+    @Enumerated(EnumType.STRING)
+    @Column(name = "default_currency")
     private Currency defaultCurrency;
 
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -2,7 +2,6 @@ package uwr.ms.model.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import uwr.ms.constant.Currency;
 
 import java.time.LocalDate;
 import java.util.List;

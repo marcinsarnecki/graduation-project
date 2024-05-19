@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
     const amountInput = document.getElementById('amount');
-    const currencySelector = document.getElementById('currencySelector');
     const toggleSplitMode = document.getElementById('toggleSplitMode');
     const participantContainer = document.getElementById('participantsContainer');
     let isAdvanced = false;
@@ -48,7 +47,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    currencySelector.addEventListener('change', calculateShares);
     amountInput.addEventListener('input', calculateShares);
 
     calculateShares();
@@ -197,10 +195,9 @@ function activateTab(tabLink) {
 
 function calculateShares() {
     const amountInput = document.getElementById('amount');
-    const currencySelector = document.getElementById('currencySelector');
     const participantContainer = document.getElementById('participantsContainer');
     const totalAmount = parseFloat(amountInput.value) || 0;
-    const currency = currencySelector.value;
+    const currency = document.getElementById('currency').value;
     const participants = Array.from(participantContainer.querySelectorAll('.participant-checkbox'));
     const weights = participantContainer.querySelectorAll('.weight-input');
     const shares = participantContainer.querySelectorAll('.share-input');

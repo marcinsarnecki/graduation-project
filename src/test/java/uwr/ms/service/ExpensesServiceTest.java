@@ -55,6 +55,7 @@ public class ExpensesServiceTest {
     private TripEntity setupTrip() {
         TripEntity trip = new TripEntity();
         trip.setName("Diving Trip");
+        trip.setDefaultCurrency(Currency.USD);
         tripService.createTrip(trip, owner.getUsername());
         Long invitationId;
 
@@ -91,7 +92,6 @@ public class ExpensesServiceTest {
         ExpensesController.ExpenseForm expenseForm = new ExpensesController.ExpenseForm(
                 "Dinner",
                 10000, //normal amount from html form
-                Currency.USD.name(),
                 LocalDate.now(),
                 owner.getUsername(),
                 Arrays.asList(user1.getUsername(), user2.getUsername(), user3.getUsername()),
@@ -125,7 +125,6 @@ public class ExpensesServiceTest {
         ExpensesController.ExpenseForm expenseForm1 = new ExpensesController.ExpenseForm(
                 "Lunch",
                 6000,
-                Currency.USD.name(),
                 LocalDate.now(),
                 owner.getUsername(),
                 Arrays.asList(user1.getUsername(), user2.getUsername(), user3.getUsername()),
@@ -141,7 +140,6 @@ public class ExpensesServiceTest {
         ExpensesController.ExpenseForm expenseForm2 = new ExpensesController.ExpenseForm(
                 "Taxi",
                 4000,
-                Currency.USD.name(),
                 LocalDate.now(),
                 user1.getUsername(),
                 Arrays.asList(owner.getUsername(), user2.getUsername(), user3.getUsername()),
@@ -157,7 +155,6 @@ public class ExpensesServiceTest {
         ExpensesController.ExpenseForm expenseForm3 = new ExpensesController.ExpenseForm(
                 "Hotel",
                 12000,
-                Currency.USD.name(),
                 LocalDate.now(),
                 user2.getUsername(),
                 Arrays.asList(owner.getUsername(), user1.getUsername(), user3.getUsername(), user4.getUsername()),
@@ -214,7 +211,6 @@ public class ExpensesServiceTest {
         ExpensesController.ExpenseForm expenseForm1 = new ExpensesController.ExpenseForm(
                 "Lunch",
                 5000,
-                Currency.USD.name(),
                 LocalDate.now(),
                 owner.getUsername(),
                 Arrays.asList(user1.getUsername(), user2.getUsername(), user3.getUsername()),
@@ -230,7 +226,6 @@ public class ExpensesServiceTest {
         ExpensesController.ExpenseForm expenseForm2 = new ExpensesController.ExpenseForm(
                 "Market",
                 4000,
-                Currency.USD.name(),
                 LocalDate.now(),
                 user1.getUsername(),
                 Arrays.asList(owner.getUsername(), user2.getUsername(), user3.getUsername()),
@@ -246,7 +241,6 @@ public class ExpensesServiceTest {
         ExpensesController.ExpenseForm expenseForm3 = new ExpensesController.ExpenseForm(
                 "Restaurant",
                 12000,
-                Currency.USD.name(),
                 LocalDate.now(),
                 user2.getUsername(),
                 Arrays.asList(owner.getUsername(), user1.getUsername(), user3.getUsername(), user6.getUsername()),
