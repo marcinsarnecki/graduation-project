@@ -19,9 +19,19 @@
 
                 <div class="tab-content">
                     <div id="expenses" class="col-md-8 offset-md-2 tab-pane fade show active">
+                        <input type="hidden" id="currentUsername" th:value="${currentUsername}"/>
                         <div class="card">
                             <div class="card-header text-center">
                                 <h5>Expenses</h5>
+                                <div class="form-check mt-2"
+                                     style="display: flex; justify-content: center; align-items: center;">
+                                    <input class="form-check-input custom-checkbox" type="checkbox" value=""
+                                           id="showMyExpensesCheckbox" onchange="filterExpenses()">
+                                    <label class="form-check-label custom-label" for="showMyExpensesCheckbox"
+                                           style="margin-left: 8px;">
+                                        Show only my expenses
+                                    </label>
+                                </div>
                             </div>
                             <div class="card-body">
                                 <div class="list-group expenses-container">
@@ -30,7 +40,9 @@
                                     </th:block>
                                     <th:block th:each="expense, iter : ${expenses}">
                                         <a href="#"
-                                           class="list-group-item list-group-item-action flex-column align-items-start"
+                                           class="list-group-item list-group-item-action flex-column align-items-start expense-item"
+                                           th:data-payer="${expense.payer.username}"
+                                           th:id="'expense-' + ${expense.id}"
                                            th:onclick="'toggleExpenseDetail(' + ${iter.index} + '); return false;'">
                                             <div class="d-flex w-100 justify-content-between">
                                                 <div class="mb-1">
@@ -48,7 +60,7 @@
                                         </a>
                                         <div th:id="'detail-' + ${iter.index}" class="expense-detail"
                                              style="display: none;">
-                                            <ul class="list-group">
+                                            <ul class="list-group" th:id="'participants-' + ${expense.id}">
                                                 <div th:each="participant : ${expense.expenseParticipants}">
                                                     <li class="detail-item">
                                                         <span th:text="${participant.participant.name} + (${participant.participant.name} != ${participant.participant.username} ? ' (' + ${participant.participant.username} + ')' : '')">Username</span>
@@ -56,6 +68,15 @@
                                                     </li>
                                                 </div>
                                             </ul>
+                                            <form th:action="@{/trips/deleteExpense}" method="post"
+                                                  style="display: inline;"
+                                                  onsubmit="return confirm('Are you sure you want to delete this expense?');">
+                                                <input type="hidden" name="expenseId" th:value="${expense.id}">
+                                                <input type="hidden" name="tripId" th:value="${trip.id}">
+                                                <button type="submit" class="btn btn-danger btn-sm mt-1">Remove
+                                                    Expense
+                                                </button>
+                                            </form>
                                         </div>
                                     </th:block>
                                 </div>

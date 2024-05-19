@@ -65,6 +65,7 @@ public class ExpensesController {
                 .max()
                 .orElse(1);
 
+        model.addAttribute("currentUsername", username);
         model.addAttribute("maxBalance", maxBalance);
         model.addAttribute("expenses", expenses);
         model.addAttribute("trip", trip);
@@ -79,6 +80,14 @@ public class ExpensesController {
     @PostMapping("/add-expense/{tripId}")
     public String addExpense(@PathVariable("tripId") Long tripId, @ModelAttribute ExpenseForm expenseForm, RedirectAttributes redirectAttributes, Model model) {
         try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            TripEntity trip = tripService.findTripById(tripId)
+                    .orElseThrow(() -> new IllegalArgumentException(String.format(Message.INVALID_TRIP_ID.toString(), tripId)));
+            boolean isParticipant = trip.getParticipants().stream()
+                    .anyMatch(participant -> participant.getUser().getUsername().equals(username));
+            if (!isParticipant) {
+                throw new AccessDeniedException(Message.TRIP_NOT_PARTICIPANT.toString());
+            }
             expensesService.saveExpense(tripId, expenseForm);
             redirectAttributes.addFlashAttribute("successMessage", Message.EXPENSE_ADDED_SUCCESS.toString());
             return "redirect:/trips/expenses/" + tripId;
@@ -86,6 +95,25 @@ public class ExpensesController {
             redirectAttributes.addFlashAttribute("errorMessages", e.getMessage());
             return "redirect:/trips/expenses/" + tripId;
         }
+    }
+
+    @PostMapping("/deleteExpense")
+    public String deleteExpense(@RequestParam("expenseId") Long expenseId, @RequestParam("tripId") Long tripId, RedirectAttributes redirectAttributes) {
+        try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            TripEntity trip = tripService.findTripById(tripId)
+                    .orElseThrow(() -> new IllegalArgumentException(String.format(Message.INVALID_TRIP_ID.toString(), tripId)));
+            boolean isParticipant = trip.getParticipants().stream()
+                    .anyMatch(participant -> participant.getUser().getUsername().equals(username));
+            if (!isParticipant) {
+                throw new AccessDeniedException(Message.TRIP_NOT_PARTICIPANT.toString());
+            }
+            expensesService.deleteExpense(expenseId);
+            redirectAttributes.addFlashAttribute("successMessage", Message.EXPENSE_DELETED_SUCCESSFULLY);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", String.format(Message.EXPENSE_DELETE_FAILED.toString(), e.getMessage()));
+        }
+        return "redirect:/trips/expenses/" + tripId;
     }
 
     public record ExpenseForm(String title, Integer amount, String currency, LocalDate date, String payerUsername, List<String> participantUsernames, List<Integer> participantAmounts) {}

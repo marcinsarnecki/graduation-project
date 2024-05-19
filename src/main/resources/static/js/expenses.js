@@ -57,6 +57,8 @@ document.addEventListener('DOMContentLoaded', function () {
         link.addEventListener('click', switchTab);
     });
 
+    document.getElementById('showMyExpensesCheckbox').addEventListener('change', filterExpenses);
+
     const form = document.querySelector('#expenseForm');
     form.addEventListener('submit', function(event) {
         participantContainer.querySelectorAll('.share-input').forEach((input, index) => {
@@ -91,6 +93,35 @@ document.addEventListener('DOMContentLoaded', function () {
         if (activePane) {
             activePane.classList.add('show', 'active');
         }
+    }
+
+    function filterExpenses() {
+        const checkbox = document.getElementById('showMyExpensesCheckbox');
+        const expenseItems = document.querySelectorAll('.expense-item');
+        const currentUsername = document.getElementById('currentUsername').value;
+
+        const allDetails = document.querySelectorAll('.expense-detail');
+        allDetails.forEach(element => {
+            element.style.display = 'none';
+        });
+
+        expenseItems.forEach(item => {
+            const payer = item.getAttribute('data-payer');
+            const expenseId = item.id.split('-')[1];
+            const participantsElement = document.getElementById('participants-' + expenseId);
+            const participants = Array.from(participantsElement.querySelectorAll('li span'))
+                .map(span => span.textContent.split(' ')[0]);
+
+            if (checkbox.checked) {
+                if (payer === currentUsername || participants.includes(currentUsername)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            } else {
+                item.style.display = 'block';
+            }
+        });
     }
 });
 
@@ -205,5 +236,3 @@ function calculateShares() {
         });
     }
 }
-
-

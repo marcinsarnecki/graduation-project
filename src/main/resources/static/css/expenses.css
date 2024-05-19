@@ -219,3 +219,18 @@
     text-align: center;
     margin-top: 20px;
 }
+
+.form-check-inline {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.custom-checkbox {
+    margin-top: 0.1rem;
+    transform: scale(0.8);
+}
+
+.custom-label {
+    margin-left: 0 !important;
+}

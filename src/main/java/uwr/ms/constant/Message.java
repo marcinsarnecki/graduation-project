@@ -32,6 +32,8 @@ public enum Message {
     INVALID_ORIGIN_DESTINATION("Invalid origin and destination."),
     //expenses
     EXPENSE_ADDED_SUCCESS("Expense added successfully!"),
+    EXPENSE_DELETED_SUCCESSFULLY("Expense deleted successfully!"),
+    EXPENSE_DELETE_FAILED("Failed to delete expense: %s"),
     PAYER_NOT_FOUND("Payer not found"),
     //friend requests
     FRIEND_REQUEST_ACCEPTED("Friend request accepted successfully!"),

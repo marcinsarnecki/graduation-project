@@ -111,6 +111,10 @@ public class ExpensesService {
         return debtDtoList;
     }
 
+    public void deleteExpense(Long expenseId) {
+        expenseRepository.deleteById(expenseId);
+    }
+
     @Data
     @AllArgsConstructor
     private class Pair {
