@@ -25,14 +25,18 @@ public class TripService {
     private final TripParticipantEntityRepository tripParticipantEntityRepository;
     private final TripInvitationRepository tripInvitationRepository;
     private final EventEntityRepository eventEntityRepository;
+    private final ExpenseEntityRepository expenseEntityRepository;
+    private final ExpenseParticipantEntityRepository expenseParticipantEntityRepository;
 
     @Autowired
-    public TripService(TripEntityRepository tripRepository, UserEntityRepository userRepository, TripParticipantEntityRepository tripParticipantEntityRepository, TripInvitationRepository tripInvitationRepository, EventEntityRepository eventEntityRepository) {
+    public TripService(TripEntityRepository tripRepository, UserEntityRepository userRepository, TripParticipantEntityRepository tripParticipantEntityRepository, TripInvitationRepository tripInvitationRepository, EventEntityRepository eventEntityRepository, ExpenseEntityRepository expenseEntityRepository, ExpenseParticipantEntityRepository expenseParticipantEntityRepository) {
         this.tripRepository = tripRepository;
         this.userRepository = userRepository;
         this.tripParticipantEntityRepository = tripParticipantEntityRepository;
         this.tripInvitationRepository = tripInvitationRepository;
         this.eventEntityRepository = eventEntityRepository;
+        this.expenseEntityRepository = expenseEntityRepository;
+        this.expenseParticipantEntityRepository = expenseParticipantEntityRepository;
     }
 
     @Transactional
@@ -56,8 +60,6 @@ public class TripService {
                         trip.getId(),
                         trip.getName(),
                         trip.getStartDate(),
-                        trip.getLocation(),
-                        trip.getDescription(),
                         isUserOwner(trip, username)
                 ))
                 .collect(Collectors.toList());
@@ -139,18 +141,26 @@ public class TripService {
     }
 
     @Transactional
-    public void removeParticipant(Long tripId, Long participantId, String username) {
+    public void removeParticipant(Long tripId, String participantUsername, String username) {//todo tests
         TripEntity trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new IllegalArgumentException(Message.TRIP_NOT_FOUND.toString()));
-        TripParticipantEntity participant = tripParticipantEntityRepository.findById(participantId)
+        TripParticipantEntity participant = tripParticipantEntityRepository.findByUserUsername(participantUsername)
                 .orElseThrow(() -> new IllegalArgumentException(Message.PARTICIPANT_NOT_FOUND.toString()));
 
-        if (!isUserOwner(trip, username)) {
+        if (isUserOwner(trip, username) && username.equals(participant.getUser().getUsername()))
+            throw new IllegalStateException(Message.OWNER_CANNOT_REMOVE_THEMSELF.toString());
+        if(!isUserOwner(trip, username) && !username.equals(participant.getUser().getUsername()))
             throw new AccessDeniedException(Message.PERMISSION_DENIED_REMOVE_PARTICIPANT.toString());
-        }
-
         if (trip.getParticipants().contains(participant)) {
-            trip.getParticipants().remove(participant);//todo test
+            trip.getParticipants().remove(participant);
+            List<ExpenseParticipantEntity> expenseParticipantEntities = expenseParticipantEntityRepository.findAllByParticipantUsernameAndExpenseTripId(participant.getUser().getUsername(), tripId);
+            for (ExpenseParticipantEntity expenseParticipant : expenseParticipantEntities) {
+                ExpenseEntity expense = expenseParticipant.getExpense();
+                expense.setAmount(expense.getAmount() - expenseParticipant.getAmount());
+                expense.getExpenseParticipants().remove(expenseParticipant);
+            }
+            List<ExpenseEntity> expenses = expenseEntityRepository.findAllByPayerUsernameAndTripId(participant.getUser().getUsername(), tripId);
+            expenseEntityRepository.deleteAll(expenses);
         } else {
             throw new IllegalStateException(Message.PARTICIPANT_NOT_ASSOCIATED.toString());
         }

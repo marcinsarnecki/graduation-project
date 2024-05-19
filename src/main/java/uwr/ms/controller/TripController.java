@@ -61,6 +61,7 @@ public class TripController {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         List<TripDTO> trips = tripService.findAllTripsByUser(username);
         model.addAttribute("trips", trips);
+        model.addAttribute("username", username);
         return "trips/my_trips";
     }
 
@@ -102,20 +103,19 @@ public class TripController {
 
     @GetMapping("/manage-participants/{tripId}")
     public String getManageParticipants(@PathVariable Long tripId,
-                                        @RequestParam(name = "page", defaultValue = "0") int page,
                                         Model model, RedirectAttributes redirectAttributes) {
         try {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
             if (!tripService.isUserOwner(tripId, username))
                 throw new AccessDeniedException(Message.EDIT_TRIP_PERMISSION_DENIED.toString());
-            Pageable pageable = PageRequest.of(page, 10);
-            Page<TripParticipantEntity> participantsPage = tripService.findParticipantsByTrip(tripId, pageable);
+
+            List<TripParticipantEntity> participants = tripService.findAllParticipantsByTripId(tripId).stream().toList();
             List<UserEntity> friends = friendshipService.getAvailableFriends(username, tripId);
             friends.sort(Comparator.comparing(UserEntity::getName, String.CASE_INSENSITIVE_ORDER));
             model.addAttribute("tripOwner", username);
             model.addAttribute("tripId", tripId);
             model.addAttribute("tripName", tripService.findTripById(tripId).get().getName());
-            model.addAttribute("participantsPage", participantsPage);
+            model.addAttribute("participants", participants);
             model.addAttribute("friends", friends);
             return "trips/manage_participants";
         } catch (Exception e) {
@@ -138,15 +138,17 @@ public class TripController {
 
     }
 
-    @PostMapping("/remove-participant/{tripId}/{participantId}")
-    public String removeParticipant(@PathVariable Long tripId, @PathVariable Long participantId, RedirectAttributes redirectAttributes) {
+    @PostMapping("/remove-participant/{tripId}/{participantUsername}")
+    public String removeParticipant(@PathVariable Long tripId, @PathVariable String participantUsername, RedirectAttributes redirectAttributes) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         try {
-            tripService.removeParticipant(tripId, participantId, username);
+            tripService.removeParticipant(tripId, participantUsername, username);
             redirectAttributes.addFlashAttribute("successMessage", Message.PARTICIPANT_REMOVED_SUCCESS);
+            if(username.equals(participantUsername))
+                return "redirect:/trips/my-trips";
             return "redirect:/trips/manage-participants/" + tripId;
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessages", e.getMessage());
             return "redirect:/trips/my-trips";
         }
     }

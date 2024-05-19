@@ -5,6 +5,7 @@ public enum Message {
     EDIT_TRIP_PERMISSION_DENIED("You do not have permission to edit this trip."),
     PERMISSION_DENIED_INVITE("You do not have permission to invite participants to this trip."),
     PERMISSION_DENIED_REMOVE_PARTICIPANT("You do not have permission to remove participants from this trip."),
+    OWNER_CANNOT_REMOVE_THEMSELF("You can not remove yourself as a owner of the trip."),
     //passwords
     CURRENT_PASSWORD_INCORRECT("Current password is incorrect."),
     INVALID_OLD_PASSWORD("Invalid old password."),

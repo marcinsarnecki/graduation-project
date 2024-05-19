@@ -20,41 +20,25 @@
                                 <h5 th:text="${tripName} + ' Participants'">Trip Participants</h5>
                             </div>
                             <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item d-flex justify-content-between align-items-center"
-                                        th:each="participant : ${participantsPage}">
-                                        <span th:text="${participant.user.username} + (${participant.user.name} != ${participant.user.username} ? ' (' + ${participant.user.name} + ')' : '')">Username</span>
-                                        <form th:action="@{/trips/remove-participant/{tripId}/{participantId}(tripId=${tripId}, participantId=${participant.id})}" method="post" th:if="${!participant.user.username.equals(tripOwner)}">
-                                            <button type="submit" class="btn btn-danger btn-sm">Remove</button>
-                                        </form>
-                                    </li>
-                                    <li class="list-group-item" th:if="${#lists.isEmpty(participantsPage)}">No participants added yet.
-                                    </li>
-                                </ul>
-
-                                <nav aria-label="Page navigation" class="mt-4">
-                                    <ul class="pagination justify-content-center">
-                                        <li th:class="|page-item ${participantsPage.hasPrevious() ? '' : 'disabled'}|">
-                                            <a class="page-link"
-                                               th:href="@{|/trips/manage-participants/${tripId}?page=${participantsPage.number - 1}|}"
-                                               th:if="${participantsPage.hasPrevious()}">Previous</a>
+                                <div class="list-container">
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center"
+                                            th:each="participant : ${participants}">
+                                            <span th:text="${participant.user.username} + (${participant.user.name} != ${participant.user.username} ? ' (' + ${participant.user.name} + ')' : '')">Username</span>
+                                            <form th:action="@{/trips/remove-participant/{tripId}/{participantUsername}(tripId=${tripId}, participantUsername=${participant.user.username})}"
+                                                  method="post" th:if="${!participant.user.username.equals(tripOwner)}">
+                                                <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                                            </form>
                                         </li>
-                                        <li th:each="pageNum : ${#numbers.sequence(0, participantsPage.totalPages - 1)}"
-                                            th:class="|page-item ${pageNum == participantsPage.number ? 'active' : ''}|">
-                                            <a class="page-link"
-                                               th:href="@{|/trips/manage-participants/${tripId}?page=${pageNum}|}"
-                                               th:text="${pageNum + 1}"></a>
-                                        </li>
-                                        <li th:class="|page-item ${participantsPage.hasNext() ? '' : 'disabled'}|">
-                                            <a class="page-link"
-                                               th:href="@{|/trips/manage-participants/${tripId}?page=${participantsPage.number + 1}|}"
-                                               th:if="${participantsPage.hasNext()}">Next</a>
+                                        <li class="list-group-item" th:if="${#lists.isEmpty(participants)}">No
+                                            participants added yet.
                                         </li>
                                     </ul>
-                                </nav>
+                                </div>
                             </div>
                         </div>
                     </div>
+
                     <div id="addParticipant" class="tab-pane fade">
                         <div class="card">
                             <div class="card-header text-center">

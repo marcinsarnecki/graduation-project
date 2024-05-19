@@ -25,5 +25,7 @@ public interface TripParticipantEntityRepository extends JpaRepository<TripParti
     List<TripEntity> findDistinctTripsByUserUsername(@Param("username") String username);
 
     void deleteById(Long id);
+
+    Optional<TripParticipantEntity> findByUserUsername(String participantUsername);
 }
 
