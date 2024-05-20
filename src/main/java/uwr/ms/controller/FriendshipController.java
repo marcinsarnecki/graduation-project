@@ -1,9 +1,6 @@
 package uwr.ms.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -107,11 +104,10 @@ public class FriendshipController {
     }
 
     @GetMapping("/my-friends")
-    public String getMyFriends(Model model, @RequestParam(name = "page", defaultValue = "0") int page) {
+    public String getMyFriends(Model model) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Pageable pageable = PageRequest.of(page, 12);
-        Page<UserEntity> friendsPage = friendshipService.getFriendsPageable(username, pageable);
-        model.addAttribute("friendsPage", friendsPage);
+        List<UserEntity> friends = friendshipService.getAllFriends(username);
+        model.addAttribute("friends", friends);
         return "friends/my_friends";
     }
 

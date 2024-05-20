@@ -1,8 +1,6 @@
 package uwr.ms.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -108,10 +106,6 @@ public class FriendshipService {
     @Transactional(readOnly = true)
     public List<UserEntity> getAllPotentialFriendsAmongTripParticipants(Long tripId, String username) {
         return userEntityRepository.findPotentialFriendsAmongParticipants(tripId, username);
-    }
-
-    public Page<UserEntity> getFriendsPageable(String username, Pageable pageable) {
-        return userEntityRepository.findFriendsByUsername(username, pageable);
     }
 
     @Transactional(readOnly = true)
