@@ -2,9 +2,6 @@ package uwr.ms.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -68,9 +65,9 @@ public class TripController {
     @GetMapping("/edit/{id}")
     public String getEditTrip(@PathVariable("id") Long tripId, Model model, RedirectAttributes redirectAttributes) {
         try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
             TripEntity trip = tripService.findTripById(tripId)
                     .orElseThrow(() -> new IllegalArgumentException(String.format(Message.INVALID_TRIP_ID.toString(), tripId)));
-            String username = SecurityContextHolder.getContext().getAuthentication().getName();
             if(!tripService.isUserOwner(trip.getId(), username))
                 throw new AccessDeniedException(Message.EDIT_TRIP_PERMISSION_DENIED.toString());
             model.addAttribute("trip", trip);
@@ -78,6 +75,18 @@ public class TripController {
             DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             String formattedStartDate = trip.getStartDate().format(outputFormatter);
             model.addAttribute("formattedStartDate", formattedStartDate);
+
+            List<TripParticipantEntity> participants = tripService.findAllParticipantsByTripId(tripId).stream().toList();
+            List<UserEntity> friends = friendshipService.getAvailableFriends(username, tripId);
+            friends.sort(Comparator.comparing(UserEntity::getName, String.CASE_INSENSITIVE_ORDER));
+            model.addAttribute("tripOwner", username);
+            model.addAttribute("tripId", tripId);
+            model.addAttribute("tripName", tripService.findTripById(tripId).get().getName());
+            model.addAttribute("participants", participants);
+            model.addAttribute("friends", friends);
+
+            model.addAttribute("events", getEventsSortedByDateAndTime(trip.getEvents()));
+            model.addAttribute("googleMapsApiKey", googleMapsApiKey);
 
             return "trips/edit_trip";
         } catch (Exception e) {
@@ -94,30 +103,7 @@ public class TripController {
                 throw new AccessDeniedException(Message.EDIT_TRIP_PERMISSION_DENIED.toString());
             tripService.updateTrip(tripId, trip);
             redirectAttributes.addFlashAttribute("successMessage", Message.TRIP_UPDATED_SUCCESS);
-            return "redirect:/trips/my-trips";
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessages", e.getMessage());
-            return "redirect:/trips/my-trips";
-        }
-    }
-
-    @GetMapping("/manage-participants/{tripId}")
-    public String getManageParticipants(@PathVariable Long tripId,
-                                        Model model, RedirectAttributes redirectAttributes) {
-        try {
-            String username = SecurityContextHolder.getContext().getAuthentication().getName();
-            if (!tripService.isUserOwner(tripId, username))
-                throw new AccessDeniedException(Message.EDIT_TRIP_PERMISSION_DENIED.toString());
-
-            List<TripParticipantEntity> participants = tripService.findAllParticipantsByTripId(tripId).stream().toList();
-            List<UserEntity> friends = friendshipService.getAvailableFriends(username, tripId);
-            friends.sort(Comparator.comparing(UserEntity::getName, String.CASE_INSENSITIVE_ORDER));
-            model.addAttribute("tripOwner", username);
-            model.addAttribute("tripId", tripId);
-            model.addAttribute("tripName", tripService.findTripById(tripId).get().getName());
-            model.addAttribute("participants", participants);
-            model.addAttribute("friends", friends);
-            return "trips/manage_participants";
+            return "redirect:/trips/edit/" + tripId;
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessages", e.getMessage());
             return "redirect:/trips/my-trips";
@@ -130,7 +116,7 @@ public class TripController {
         try {
             tripService.sendTripInvitation(tripId, username, currentUsername);
             redirectAttributes.addFlashAttribute("successMessage", Message.USER_INVITED_SUCCESS);
-            return "redirect:/trips/manage-participants/" + tripId;
+            return "redirect:/trips/edit/" + tripId;
         } catch (IllegalStateException | AccessDeniedException e) {
             redirectAttributes.addFlashAttribute("errorMessages", e.getMessage());
             return "redirect:/trips/my-trips";
@@ -144,9 +130,7 @@ public class TripController {
         try {
             tripService.removeParticipant(tripId, participantUsername, username);
             redirectAttributes.addFlashAttribute("successMessage", Message.PARTICIPANT_REMOVED_SUCCESS);
-            if(username.equals(participantUsername))
-                return "redirect:/trips/my-trips";
-            return "redirect:/trips/manage-participants/" + tripId;
+            return "redirect:/trips/edit/" + tripId;
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessages", e.getMessage());
             return "redirect:/trips/my-trips";
@@ -215,25 +199,7 @@ public class TripController {
             model.addAttribute("googleMapsApiKey", googleMapsApiKey);
             return "trips/view_trip";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
-            return "redirect:/trips/my-trips";
-        }
-    }
-
-    @GetMapping("/manage-events/{tripId}")
-    public String manageEvents(@PathVariable Long tripId, Model model, RedirectAttributes redirectAttributes) {
-        try {
-            String username = SecurityContextHolder.getContext().getAuthentication().getName();
-            if (!tripService.isUserOwner(tripId, username))
-                throw new AccessDeniedException(Message.EDIT_TRIP_PERMISSION_DENIED.toString());
-            TripEntity trip = tripService.findTripById(tripId)
-                    .orElseThrow(() -> new IllegalArgumentException(String.format(Message.INVALID_TRIP_ID.toString(), tripId)));
-            model.addAttribute("trip", trip);
-            model.addAttribute("events", getEventsSortedByDateAndTime(trip.getEvents()));
-            model.addAttribute("googleMapsApiKey", googleMapsApiKey);
-            return "trips/manage_events";
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessages", e.getMessage());
             return "redirect:/trips/my-trips";
         }
     }
@@ -250,10 +216,11 @@ public class TripController {
                 throw new IllegalArgumentException(Message.INVALID_DATE_TIME.toString());
             tripService.addEventToTrip(event, trip);
             redirectAttributes.addFlashAttribute("successMessage", Message.EVENT_SAVED_SUCCESS);
+            return "redirect:/trips/edit/" + tripId;
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessages", e.getMessage());
+            return "redirect:/trips/my-trips";
         }
-        return "redirect:/trips/manage-events/" + tripId;
     }
 
     private List<EventEntity> getEventsSortedByDateAndTime(List<EventEntity> events) {
@@ -269,10 +236,10 @@ public class TripController {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
             tripService.deleteEvent(tripId, eventId, username);
             redirectAttributes.addFlashAttribute("successMessage", Message.EVENT_DELETED_SUCCESS);
-            return "redirect:/trips/manage-events/" + tripId;
+            return "redirect:/trips/edit/" + tripId;
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessages", e.getMessage());
-            return "redirect:/error";
+            return "redirect:/trips/my-trips";
         }
     }
 
