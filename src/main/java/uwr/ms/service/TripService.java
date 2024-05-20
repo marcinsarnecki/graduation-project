@@ -92,6 +92,7 @@ public class TripService {
         trip.setStartDate(updatedTrip.getStartDate());
         trip.setLocation(updatedTrip.getLocation());
         trip.setDescription(updatedTrip.getDescription());
+        trip.setDefaultCurrency(updatedTrip.getDefaultCurrency());
         tripRepository.save(trip);
     }
 
