@@ -73,6 +73,7 @@ public enum Message {
     TRIP_NOT_FOUND("Trip not found."),
     TRIP_NOT_PARTICIPANT("You are not a participant of this trip."),
     TRIP_UPDATED_SUCCESS("Trip updated successfully!"),
+    TRIP_DELETED_SUCCESS("Trip deleted successfully!"),
     USER_ALREADY_PARTICIPANT("User is already a participant of the trip."),
     //users
     IMAGE_URL_TOO_LONG("Image URL is longer than 255 characters."),

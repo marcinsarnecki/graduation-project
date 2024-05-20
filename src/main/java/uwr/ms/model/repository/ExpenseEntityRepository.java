@@ -9,4 +9,5 @@ public interface ExpenseEntityRepository extends JpaRepository<ExpenseEntity, Lo
     List<ExpenseEntity> findAllByTripId(Long tripId);
 
     List<ExpenseEntity> findAllByPayerUsernameAndTripId(String username, Long tripId);
+    void deleteAllByTripId(Long tripId);
 }

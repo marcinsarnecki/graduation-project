@@ -91,11 +91,11 @@ public class ExpensesServiceTest {
 
         ExpensesController.ExpenseForm expenseForm = new ExpensesController.ExpenseForm(
                 "Dinner",
-                10000, //normal amount from html form
+                10000,
                 LocalDate.now(),
                 owner.getUsername(),
                 Arrays.asList(user1.getUsername(), user2.getUsername(), user3.getUsername()),
-                Arrays.asList(2000, 6000, 2000) // amounts in cents
+                Arrays.asList(2000, 6000, 2000)
         );
 
         expensesService.saveExpense(trip.getId(), expenseForm);
@@ -275,6 +275,5 @@ public class ExpensesServiceTest {
             expectedBalances.put(creditorUsername, expectedBalances.get(creditorUsername) - amount);
         }
     }
-
 }
 

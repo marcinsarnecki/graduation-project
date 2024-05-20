@@ -1,8 +1,6 @@
 package uwr.ms.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,13 +94,6 @@ public class TripService {
         tripRepository.save(trip);
     }
 
-    @Transactional(readOnly = true)
-    public Page<TripParticipantEntity> findParticipantsByTrip(Long tripId, Pageable pageable) {
-        TripEntity trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException(String.format(Message.INVALID_TRIP_ID.toString(), tripId)));
-        return tripParticipantEntityRepository.findByTrip(trip, pageable);
-    }
-
     @Transactional
     public Set<TripParticipantEntity> findAllParticipantsByTripId(Long tripId) {
         TripEntity trip = tripRepository.findById(tripId)
@@ -142,7 +133,7 @@ public class TripService {
     }
 
     @Transactional
-    public void removeParticipant(Long tripId, String participantUsername, String username) {//todo tests
+    public void removeParticipant(Long tripId, String participantUsername, String username) {
         TripEntity trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new IllegalArgumentException(Message.TRIP_NOT_FOUND.toString()));
         TripParticipantEntity participant = tripParticipantEntityRepository.findByUserUsername(participantUsername)
@@ -238,6 +229,20 @@ public class TripService {
             throw new IllegalArgumentException(Message.EVENT_NOT_BELONG_TO_TRIP.toString());
         trip.getEvents().removeIf(e -> e.getId().equals(eventId));
         eventEntityRepository.delete(event);
+    }
+
+    @Transactional
+    public void deleteTrip(Long tripId, String username) {
+        TripEntity trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new IllegalArgumentException(Message.TRIP_NOT_FOUND.toString()));
+        if (!isUserOwner(trip, username))
+            throw new AccessDeniedException(Message.EDIT_TRIP_PERMISSION_DENIED.toString());
+        eventEntityRepository.deleteAllByTripId(tripId);
+        tripInvitationRepository.deleteAllByTripId(tripId);
+        tripParticipantEntityRepository.deleteAllByTripId(tripId);
+        expenseParticipantEntityRepository.deleteAllByExpenseTripId(tripId);
+        expenseEntityRepository.deleteAllByTripId(tripId);
+        tripRepository.delete(trip);
     }
 }
 

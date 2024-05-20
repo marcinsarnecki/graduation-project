@@ -1,7 +1,5 @@
 package uwr.ms.model.repository;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,10 +12,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TripParticipantEntityRepository extends JpaRepository<TripParticipantEntity, Long> {
-    Page<TripParticipantEntity> findByTrip(TripEntity trip, Pageable pageable);
-    List<TripParticipantEntity> findByTrip(TripEntity trip);
-    List<TripParticipantEntity> findByTripId(Long tripId);
-
     Optional<TripParticipantEntity> findByTripAndUser(TripEntity trip, UserEntity user);
 
     List<TripParticipantEntity> findByUserAndRole(UserEntity user, TripParticipantRole role);
@@ -27,5 +21,9 @@ public interface TripParticipantEntityRepository extends JpaRepository<TripParti
     void deleteById(Long id);
 
     Optional<TripParticipantEntity> findByUserUsername(String participantUsername);
+
+    void deleteAllByTripId(Long tripId);
+
+    List<TripParticipantEntity> findAllByTripId(Long tripId);
 }
 

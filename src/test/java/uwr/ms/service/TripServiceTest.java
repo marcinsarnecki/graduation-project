@@ -12,10 +12,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import uwr.ms.constant.EventType;
 import uwr.ms.constant.LoginProvider;
-import uwr.ms.model.entity.EventEntity;
-import uwr.ms.model.entity.TripEntity;
-import uwr.ms.model.entity.TripParticipantEntity;
-import uwr.ms.model.entity.UserEntity;
+import uwr.ms.constant.Message;
+import uwr.ms.controller.ExpensesController;
+import uwr.ms.model.entity.*;
 import uwr.ms.model.repository.*;
 
 import java.time.LocalDate;
@@ -34,6 +33,9 @@ public class TripServiceTest {
     private TripService tripService;
 
     @Autowired
+    private ExpensesService expensesService;
+
+    @Autowired
     private UserEntityRepository userRepository;
 
     @Autowired
@@ -47,6 +49,12 @@ public class TripServiceTest {
 
     @Autowired
     private EventEntityRepository eventEntityRepository;
+
+    @Autowired
+    private ExpenseEntityRepository expenseEntityRepository;
+
+    @Autowired
+    private ExpenseParticipantEntityRepository expenseParticipantEntityRepository;
 
     private UserEntity owner, user1, user2;
 
@@ -163,7 +171,7 @@ public class TripServiceTest {
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("User1 should be a participant"));
 
-        tripService.removeParticipant(trip.getId(), participantToRemove.getId(), owner.getUsername());
+        tripService.removeParticipant(trip.getId(), participantToRemove.getUser().getUsername(), owner.getUsername());
 
         Set<TripParticipantEntity> updatedParticipants = tripService.findAllParticipantsByTripId(trip.getId());
         assertThat(updatedParticipants).hasSize(1);
@@ -186,9 +194,9 @@ public class TripServiceTest {
                 .orElseThrow(() -> new IllegalStateException("User1 should be a participant"));
 
         assertThatThrownBy(() -> {
-            tripService.removeParticipant(trip.getId(), participant.getId(), user1.getUsername());
+            tripService.removeParticipant(trip.getId(), participant.getUser().getUsername(), user2.getUsername());
         }).isInstanceOf(AccessDeniedException.class)
-                .hasMessageContaining("You do not have permission to remove participants from this trip");
+                .hasMessageContaining(Message.PERMISSION_DENIED_REMOVE_PARTICIPANT.toString());
     }
 
     @Test
@@ -227,7 +235,7 @@ public class TripServiceTest {
         assertThatThrownBy(() -> {
             tripService.deleteEvent(trip.getId(), 999999L, owner.getUsername());
         }).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Event not found");
+                .hasMessageContaining(Message.EVENT_NOT_FOUND.toString());
     }
 
     @Test
@@ -236,7 +244,7 @@ public class TripServiceTest {
         assertThatThrownBy(() -> {
             tripService.deleteEvent(trip.getId() + 1, 1L, owner.getUsername());
         }).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Trip not found");
+                .hasMessageContaining(Message.TRIP_NOT_FOUND.toString());
     }
 
     @Test
@@ -245,7 +253,7 @@ public class TripServiceTest {
         assertThatThrownBy(() -> {
             tripService.deleteEvent(trip.getId(), 1L, user1.getUsername());
         }).isInstanceOf(AccessDeniedException.class)
-                .hasMessageContaining("You do not have permission to edit this trip");
+                .hasMessageContaining(Message.EDIT_TRIP_PERMISSION_DENIED.toString());
     }
 
     @Test
@@ -254,7 +262,7 @@ public class TripServiceTest {
         assertThatThrownBy(() -> {
             TripEntity trip2 = setupTripWithEvent();
         }).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("You already have a trip with the same name");
+                .hasMessageContaining(Message.TRIP_NAME_EXISTS.toString());
     }
 
     @Test
@@ -284,5 +292,242 @@ public class TripServiceTest {
 
         assertThat(remainingEventNames).containsExactlyInAnyOrder("Event 1", "Event 3");
         assertThat(remainingEventNames).doesNotContain("Event 2", "Event 4");
+    }
+
+    @Test
+    void deleteTripSuccessfully() {
+        TripEntity trip1 = new TripEntity();
+        trip1.setName("Test Trip 1");
+        tripService.createTrip(trip1, owner.getUsername());
+
+        tripService.sendTripInvitation(trip1.getId(), user1.getUsername(), owner.getUsername());
+        Long invitationId1 = tripService.getTripInvitations(user1.getUsername()).get(0).getId();
+        tripService.acceptInvitation(invitationId1, user1.getUsername());
+
+        tripService.sendTripInvitation(trip1.getId(), user2.getUsername(), owner.getUsername());
+        Long invitationId2 = tripService.getTripInvitations(user2.getUsername()).get(0).getId();
+        tripService.acceptInvitation(invitationId2, user2.getUsername());
+
+        UserEntity user3 = new UserEntity("user3", "Password4", "user3@example.com", "User Three", LoginProvider.APP, "");
+        userRepository.save(user3);
+        tripService.sendTripInvitation(trip1.getId(), user3.getUsername(), owner.getUsername());
+
+        EventEntity event1 = createEvent("Event 1", "Location 1", LocalDate.now(), LocalTime.now());
+        EventEntity event2 = createEvent("Event 2", "Location 2", LocalDate.now(), LocalTime.now());
+        tripService.addEventToTrip(event1, trip1);
+        tripService.addEventToTrip(event2, trip1);
+
+        ExpensesController.ExpenseForm expenseForm1 = new ExpensesController.ExpenseForm(
+                "Expense 1",
+                1000,
+                LocalDate.now(),
+                owner.getUsername(),
+                Arrays.asList(user1.getUsername(), user2.getUsername()),
+                Arrays.asList(500, 500));
+        ExpensesController.ExpenseForm expenseForm2 = new ExpensesController.ExpenseForm(
+                "Expense 2",
+                2000,
+                LocalDate.now(),
+                user2.getUsername(),
+                Arrays.asList(owner.getUsername(), user1.getUsername()),
+                Arrays.asList(1425, 575));
+        expensesService.saveExpense(trip1.getId(), expenseForm1);
+        expensesService.saveExpense(trip1.getId(), expenseForm2);
+
+        TripEntity trip2 = new TripEntity();
+        trip2.setName("Test Trip 2");
+        tripService.createTrip(trip2, owner.getUsername());
+
+        tripService.sendTripInvitation(trip2.getId(), user1.getUsername(), owner.getUsername());
+        Long invitationId3 = tripService.getTripInvitations(user1.getUsername()).get(0).getId();
+        tripService.acceptInvitation(invitationId3, user1.getUsername());
+
+        tripService.sendTripInvitation(trip2.getId(), user2.getUsername(), owner.getUsername());
+        Long invitationId4 = tripService.getTripInvitations(user2.getUsername()).get(0).getId();
+        tripService.acceptInvitation(invitationId4, user2.getUsername());
+
+        EventEntity event3 = createEvent("Event 3", "Location 3", LocalDate.now(), LocalTime.now());
+        EventEntity event4 = createEvent("Event 4", "Location 4", LocalDate.now(), LocalTime.now());
+        tripService.addEventToTrip(event3, trip2);
+        tripService.addEventToTrip(event4, trip2);
+
+        ExpensesController.ExpenseForm expenseForm3 = new ExpensesController.ExpenseForm(
+                "Expense 3",
+                1500,
+                LocalDate.now(),
+                owner.getUsername(),
+                Arrays.asList(user1.getUsername(), user2.getUsername()),
+                Arrays.asList(750, 750));
+        ExpensesController.ExpenseForm expenseForm4 = new ExpensesController.ExpenseForm(
+                "Expense 4",
+                2500,
+                LocalDate.now(),
+                user2.getUsername(),
+                Arrays.asList(owner.getUsername(), user1.getUsername()),
+                Arrays.asList(1250, 1250));
+        expensesService.saveExpense(trip2.getId(), expenseForm3);
+        expensesService.saveExpense(trip2.getId(), expenseForm4);
+
+        assertThat(tripRepository.findById(trip1.getId())).isPresent();
+        assertThat(tripRepository.findById(trip2.getId())).isPresent();
+        assertThat(eventEntityRepository.findAllByTripId(trip1.getId())).isNotEmpty();
+        assertThat(eventEntityRepository.findAllByTripId(trip2.getId())).isNotEmpty();
+        assertThat(expenseEntityRepository.findAllByTripId(trip1.getId())).isNotEmpty();
+        assertThat(expenseEntityRepository.findAllByTripId(trip2.getId())).isNotEmpty();
+        assertThat(tripInvitationRepository.findByTripId(trip1.getId())).isNotEmpty();
+        assertThat(tripInvitationRepository.findByTripId(trip2.getId())).isEmpty();
+
+        tripService.deleteTrip(trip1.getId(), owner.getUsername());
+
+        assertThat(tripRepository.findById(trip1.getId())).isEmpty();
+        assertThat(eventEntityRepository.findAllByTripId(trip1.getId())).isEmpty();
+        assertThat(expenseEntityRepository.findAllByTripId(trip1.getId())).isEmpty();
+        assertThat(expenseParticipantEntityRepository.findAllByExpenseTripId(trip1.getId())).isEmpty();
+        assertThat(tripInvitationRepository.findByTripId(trip1.getId())).isEmpty();
+        assertThat(tripParticipantRepository.findAllByTripId(trip1.getId())).isEmpty();
+
+        assertThat(tripRepository.findById(trip2.getId())).isPresent();
+        assertThat(eventEntityRepository.findAllByTripId(trip2.getId())).isNotEmpty();
+        assertThat(expenseEntityRepository.findAllByTripId(trip2.getId())).isNotEmpty();
+        assertThat(expenseParticipantEntityRepository.findAllByExpenseTripId(trip2.getId())).isNotEmpty();
+        assertThat(tripInvitationRepository.findByTripId(trip2.getId())).isEmpty();
+        assertThat(tripParticipantRepository.findAllByTripId(trip2.getId())).isNotEmpty();
+    }
+
+    @Test
+    void removeParticipantSuccessfully() {
+        TripEntity trip = new TripEntity();
+        trip.setName("Test Trip");
+        tripService.createTrip(trip, owner.getUsername());
+
+        tripService.sendTripInvitation(trip.getId(), user1.getUsername(), owner.getUsername());
+        Long invitationId1 = tripService.getTripInvitations(user1.getUsername()).get(0).getId();
+        tripService.acceptInvitation(invitationId1, user1.getUsername());
+
+        tripService.sendTripInvitation(trip.getId(), user2.getUsername(), owner.getUsername());
+        Long invitationId2 = tripService.getTripInvitations(user2.getUsername()).get(0).getId();
+        tripService.acceptInvitation(invitationId2, user2.getUsername());
+
+        ExpensesController.ExpenseForm expenseForm = new ExpensesController.ExpenseForm(
+                "Expense 1",
+                1000,
+                LocalDate.now(),
+                owner.getUsername(),
+                Arrays.asList(user1.getUsername(), user2.getUsername()),
+                Arrays.asList(500, 500));
+        expensesService.saveExpense(trip.getId(), expenseForm);
+
+        assertThat(tripParticipantRepository.findByTripAndUser(trip, user1)).isPresent();
+        assertThat(expenseParticipantEntityRepository.findAllByParticipantUsernameAndExpenseTripId(user1.getUsername(), trip.getId())).isNotEmpty();
+        assertThat(expenseEntityRepository.findAllByPayerUsernameAndTripId(user1.getUsername(), trip.getId())).isEmpty();
+
+        tripService.removeParticipant(trip.getId(), user1.getUsername(), owner.getUsername());
+
+        assertThat(tripParticipantRepository.findByTripAndUser(trip, user1)).isEmpty();
+        assertThat(expenseParticipantEntityRepository.findAllByParticipantUsernameAndExpenseTripId(user1.getUsername(), trip.getId())).isEmpty();
+        assertThat(expenseEntityRepository.findAllByPayerUsernameAndTripId(user1.getUsername(), trip.getId())).isEmpty();
+
+        assertThat(tripParticipantRepository.findByTripAndUser(trip, user2)).isPresent();
+    }
+
+    @Test
+    void removeParticipantThrowsAccessDeniedExceptionForNonOwner() {
+        TripEntity trip = new TripEntity();
+        trip.setName("Test Trip");
+        tripService.createTrip(trip, owner.getUsername());
+
+        tripService.sendTripInvitation(trip.getId(), user1.getUsername(), owner.getUsername());
+        Long invitationId1 = tripService.getTripInvitations(user1.getUsername()).get(0).getId();
+        tripService.acceptInvitation(invitationId1, user1.getUsername());
+
+        tripService.sendTripInvitation(trip.getId(), user2.getUsername(), owner.getUsername());
+        Long invitationId2 = tripService.getTripInvitations(user2.getUsername()).get(0).getId();
+        tripService.acceptInvitation(invitationId2, user2.getUsername());
+
+        assertThat(tripParticipantRepository.findByTripAndUser(trip, user1)).isPresent();
+
+        assertThatThrownBy(() -> tripService.removeParticipant(trip.getId(), user1.getUsername(), user2.getUsername()))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining(Message.PERMISSION_DENIED_REMOVE_PARTICIPANT.toString());
+    }
+
+    @Test
+    void removeParticipantThrowsIllegalStateExceptionForOwnerRemovingThemself() {
+        TripEntity trip = new TripEntity();
+        trip.setName("Test Trip");
+        tripService.createTrip(trip, owner.getUsername());
+
+        tripService.sendTripInvitation(trip.getId(), user1.getUsername(), owner.getUsername());
+        Long invitationId1 = tripService.getTripInvitations(user1.getUsername()).get(0).getId();
+        tripService.acceptInvitation(invitationId1, user1.getUsername());
+
+        assertThat(tripParticipantRepository.findByTripAndUser(trip, owner)).isPresent();
+
+        assertThatThrownBy(() -> tripService.removeParticipant(trip.getId(), owner.getUsername(), owner.getUsername()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(Message.OWNER_CANNOT_REMOVE_THEMSELF.toString());
+    }
+
+    @Test
+    void removeParticipantThrowsIllegalArgumentExceptionForParticipantNotAssociated() {
+        TripEntity trip = new TripEntity();
+        trip.setName("Test Trip");
+        tripService.createTrip(trip, owner.getUsername());
+
+        tripService.sendTripInvitation(trip.getId(), user1.getUsername(), owner.getUsername());
+        Long invitationId1 = tripService.getTripInvitations(user1.getUsername()).get(0).getId();
+        tripService.acceptInvitation(invitationId1, user1.getUsername());
+
+        assertThat(tripParticipantRepository.findByTripAndUser(trip, user1)).isPresent();
+
+        assertThatThrownBy(() -> tripService.removeParticipant(trip.getId(), "nonExistingUser", owner.getUsername()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining(Message.PARTICIPANT_NOT_FOUND.toString());
+    }
+    @Test
+    void removeParticipantAndExpensesSuccessfully() {
+        TripEntity trip = new TripEntity();
+        trip.setName("Test Trip");
+        tripService.createTrip(trip, owner.getUsername());
+
+        tripService.sendTripInvitation(trip.getId(), user1.getUsername(), owner.getUsername());
+        Long invitationId1 = tripService.getTripInvitations(user1.getUsername()).get(0).getId();
+        tripService.acceptInvitation(invitationId1, user1.getUsername());
+
+        tripService.sendTripInvitation(trip.getId(), user2.getUsername(), owner.getUsername());
+        Long invitationId2 = tripService.getTripInvitations(user2.getUsername()).get(0).getId();
+        tripService.acceptInvitation(invitationId2, user2.getUsername());
+
+        ExpensesController.ExpenseForm expenseForm1 = new ExpensesController.ExpenseForm(
+                "Expense 1",
+                1000,
+                LocalDate.now(),
+                user1.getUsername(),
+                Arrays.asList(user2.getUsername(), owner.getUsername()),
+                Arrays.asList(500, 500));
+        ExpensesController.ExpenseForm expenseForm2 = new ExpensesController.ExpenseForm(
+                "Expense 2",
+                2000,
+                LocalDate.now(),
+                owner.getUsername(),
+                Arrays.asList(user1.getUsername(), user2.getUsername()),
+                Arrays.asList(900, 1100));
+        expensesService.saveExpense(trip.getId(), expenseForm1);
+        expensesService.saveExpense(trip.getId(), expenseForm2);
+
+        assertThat(expenseEntityRepository.findAllByPayerUsernameAndTripId(user1.getUsername(), trip.getId())).hasSize(1);
+        assertThat(expenseParticipantEntityRepository.findAllByParticipantUsernameAndExpenseTripId(user1.getUsername(), trip.getId())).hasSize(1);
+
+        tripService.removeParticipant(trip.getId(), user1.getUsername(), owner.getUsername());
+
+        assertThat(tripParticipantRepository.findByTripAndUser(trip, user1)).isEmpty();
+        assertThat(expenseEntityRepository.findAllByPayerUsernameAndTripId(user1.getUsername(), trip.getId())).isEmpty();
+        assertThat(expenseParticipantEntityRepository.findAllByParticipantUsernameAndExpenseTripId(user1.getUsername(), trip.getId())).isEmpty();
+
+        ExpenseEntity remainingExpense = expenseEntityRepository.findAllByTripId(trip.getId()).get(0);
+        assertThat(remainingExpense.getAmount()).isEqualTo(2000 - 900);
+
+        assertThat(tripParticipantRepository.findByTripAndUser(trip, user2)).isPresent();
+        assertThat(expenseParticipantEntityRepository.findAllByParticipantUsernameAndExpenseTripId(user2.getUsername(), trip.getId())).hasSize(1);
     }
 }

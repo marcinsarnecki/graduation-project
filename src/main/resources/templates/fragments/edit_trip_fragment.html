@@ -2,7 +2,8 @@
     <div class="container mt-3">
         <div class="row justify-content-center">
             <div class="col-md-10">
-                <th:block th:replace="~{fragments/alert_message_fragment::alertMessages(${errorMessages}, ${successMessage})}"></th:block>
+                <th:block
+                        th:replace="~{fragments/alert_message_fragment::alertMessages(${errorMessages}, ${successMessage})}"></th:block>
                 <ul class="nav nav-tabs justify-content-center mb-4">
                     <li class="nav-item">
                         <a class="nav-link active" data-toggle="tab" href="#editTrip">Edit Trip</a>
@@ -67,16 +68,17 @@
                                                   data-th-field="*{description}" rows="10"
                                                   style="margin-bottom: 20px;"></textarea>
                                     </div>
-                                    <div class="d-flex justify-content-between">
-                                        <button type="submit" class="btn btn-outline-success">Save Changes</button>
-                                        <div>
-                                            <a th:href="@{|/trips/manage-participants/${trip.id}|}"
-                                               class="btn btn-outline-primary">Manage Participants</a>
-                                            <a th:href="@{|/trips/manage-events/${trip.id}|}"
-                                               class="btn btn-outline-primary">Manage Events</a>
-                                        </div>
-                                    </div>
                                 </form>
+                                <div class="d-flex justify-content-between">
+                                    <button type="submit" class="btn btn-outline-success">Save Changes</button>
+                                    <div>
+                                        <form th:action="@{|/trips/delete-trip/${trip.id}|}" method="post"
+                                              onsubmit="return confirm('Are you sure you want to delete this trip?');">
+                                            <button type="submit" class="btn btn-outline-danger">Delete trip</button>
+                                        </form>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
                     </div>

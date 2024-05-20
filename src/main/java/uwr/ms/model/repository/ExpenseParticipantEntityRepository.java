@@ -8,4 +8,7 @@ import java.util.List;
 
 public interface ExpenseParticipantEntityRepository extends JpaRepository<ExpenseParticipantEntity, Long> {
     List<ExpenseParticipantEntity> findAllByParticipantUsernameAndExpenseTripId(String username, Long TripId);
+    void deleteAllByExpenseTripId(Long tripId);
+
+    List<ExpenseParticipantEntity> findAllByExpenseTripId(Long tripId);
 }

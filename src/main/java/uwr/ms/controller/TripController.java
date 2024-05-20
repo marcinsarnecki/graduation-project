@@ -243,6 +243,19 @@ public class TripController {
         }
     }
 
+    @PostMapping("/delete-trip/{tripId}")
+    public String deleteTrip(@PathVariable Long tripId, RedirectAttributes redirectAttributes) {
+        try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            tripService.deleteTrip(tripId, username);
+            redirectAttributes.addFlashAttribute("successMessage", Message.TRIP_DELETED_SUCCESS);
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessages", e.getMessage());
+        }
+        return "redirect:/trips/my-trips";
+    }
+
+
     public record ParticipantDTO(String username, String name, boolean isPotentialFriend) {}
 }
 

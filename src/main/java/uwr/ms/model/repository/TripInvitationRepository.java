@@ -13,4 +13,7 @@ public interface TripInvitationRepository extends CrudRepository<TripInvitationE
     Optional<TripInvitationEntity> findByTripAndReceiver(TripEntity trip, UserEntity invitedUser);
 
     List<TripInvitationEntity> findByReceiverUsername(String username);
+    void deleteAllByTripId(Long tripId);
+
+    Optional<TripInvitationEntity> findByTripId(Long tripId);
 }
