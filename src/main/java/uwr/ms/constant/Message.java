@@ -70,6 +70,7 @@ public enum Message {
     PARTICIPANT_REMOVED_SUCCESS("Participant removed successfully."),
     INVALID_TRIP_ID("Invalid trip Id: %s."),
     TRIP_NAME_EXISTS("You already have a trip with the same name."),
+    TRIP_NAME_TOO_LONG("Too long trip name."),
     TRIP_NOT_FOUND("Trip not found."),
     TRIP_NOT_PARTICIPANT("You are not a participant of this trip."),
     TRIP_UPDATED_SUCCESS("Trip updated successfully!"),

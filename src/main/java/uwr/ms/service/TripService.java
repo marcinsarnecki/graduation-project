@@ -43,6 +43,8 @@ public class TripService {
                 .orElseThrow(() -> new IllegalArgumentException(String.format(Message.USER_NOT_FOUND.toString(), ownerUsername)));
         if (tripRepository.existsByNameAndOwnerUsername(trip.getName(), ownerUsername))
             throw new IllegalStateException(Message.TRIP_NAME_EXISTS.toString());
+        if(trip.getName().length() > 30)
+            throw new IllegalArgumentException(Message.TRIP_NAME_TOO_LONG.toString());
         TripParticipantEntity ownerParticipant = new TripParticipantEntity();
         ownerParticipant.setUser(owner);
         ownerParticipant.setRole(TripParticipantRole.OWNER);
@@ -86,6 +88,8 @@ public class TripService {
     public void updateTrip(Long tripId, TripEntity updatedTrip) {
         TripEntity trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new IllegalArgumentException(String.format(Message.INVALID_TRIP_ID.toString(), tripId)));
+        if(trip.getName().length() > 30)
+            throw new IllegalArgumentException(Message.TRIP_NAME_TOO_LONG.toString());
         trip.setName(updatedTrip.getName());
         trip.setStartDate(updatedTrip.getStartDate());
         trip.setLocation(updatedTrip.getLocation());
