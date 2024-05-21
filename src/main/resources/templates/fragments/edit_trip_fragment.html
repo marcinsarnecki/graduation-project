@@ -94,7 +94,12 @@
                                     <ul class="list-group list-group-flush">
                                         <li class="list-group-item d-flex justify-content-between align-items-center"
                                             th:each="participant : ${participants}">
-                                            <span th:text="${participant.user.username} + (${participant.user.name} != ${participant.user.username} ? ' (' + ${participant.user.name} + ')' : '')">Username</span>
+                                            <div class="d-flex align-items-center">
+                                                <img th:if="${participant.user.imageUrl != null && !participant.user.imageUrl.isEmpty()}"
+                                                     th:src="${participant.user.imageUrl}" alt="Avatar" class="rounded-circle"
+                                                     style="width: 2rem; height: 2rem; margin-right: 0.5rem;">
+                                                <span th:text="${participant.user.username} + (${participant.user.name} != ${participant.user.username} ? ' (' + ${participant.user.name} + ')' : '')">Username</span>
+                                            </div>
                                             <form th:action="@{/trips/remove-participant/{tripId}/{participantUsername}(tripId=${tripId}, participantUsername=${participant.user.username})}"
                                                   method="post" th:if="${!participant.user.username.equals(tripOwner)}">
                                                 <button type="submit" class="btn btn-danger btn-sm">Remove</button>
@@ -128,8 +133,13 @@
                                     </form>
                                     <div class="friends-container">
                                         <ul id="friendsList" class="list-group">
-                                            <li th:each="friend : ${friends}" class="list-group-item"
-                                                th:text="${friend.username} + ' (' + ${friend.name} + ')'">
+                                            <li th:each="friend : ${friends}" class="list-group-item">
+                                                <div class="d-flex align-items-center">
+                                                    <img th:if="${friend.imageUrl != null && !friend.imageUrl.isEmpty()}"
+                                                         th:src="${friend.imageUrl}" alt="Avatar" class="rounded-circle"
+                                                         style="width: 2rem; height: 2rem; margin-right: 0.5rem;">
+                                                    <span th:text="${friend.username} + (${friend.name} != ${friend.username} ? ' (' + ${friend.name} + ')' : '')">Username</span>
+                                                </div>
                                             </li>
                                         </ul>
                                     </div>

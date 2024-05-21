@@ -63,14 +63,19 @@
 
                     <div id="participants" class="tab-pane fade col-md-6 offset-md-3">
                         <div class="card">
-                            <div class="card-header d-flex align-items-center justify-content-center" style="padding: 1rem;">
+                            <div class="card-header d-flex align-items-center justify-content-center" style="padding: 0.8rem;">
                                 <h5 class="mb-0">Participants</h5>
                             </div>
                             <div class="card-body scrollable-content">
                                 <ul class="list-group list-group-flush">
                                     <li class="list-group-item d-flex justify-content-between align-items-center"
                                         th:each="participant : ${participants}">
-                                        <span th:text="${participant.name} + (${participant.name} != ${participant.username} ? ' (' + ${participant.username} + ')' : '')">Username</span>
+                                        <div class="d-flex align-items-center">
+                                            <img th:if="${participant.imageUrl != null && !participant.imageUrl.isEmpty()}"
+                                                 th:src="${participant.imageUrl}" alt="Avatar" class="rounded-circle"
+                                                 style="width: 2rem; height: 2rem; margin-right: 0.5rem;">
+                                            <span th:text="${participant.name} + (${participant.name} != ${participant.username} ? ' (' + ${participant.username} + ')' : '')">Username</span>
+                                        </div>
                                         <button type="button" th:if="${participant.isPotentialFriend}"
                                                 th:attr="onclick='sendFriendRequest(\'' + ${participant.username} + '\', event)'"
                                                 class="btn btn-primary btn-sm">

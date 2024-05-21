@@ -10,7 +10,7 @@
                     </div>
                     <div class="card-body">
                         <div style="max-height: 39rem; overflow-y: auto; padding: 0;">
-                            <ul class="list-group list-group-flush" th:unless="${#lists.isEmpty(friends)}">
+                            <ul class="list-group list-group-flush">
                                 <li class="list-group-item d-flex justify-content-between align-items-center"
                                     th:each="friend : ${friends}">
                                     <div class="d-flex align-items-center">
@@ -24,13 +24,12 @@
                                         <button type="submit" class="btn btn-outline-danger btn-sm">Unfriend</button>
                                     </form>
                                 </li>
+                                <li class="list-group-item text-center" th:if="${#lists.isEmpty(friends)}">
+                                    <p>No friends found.</p>
+                                </li>
                             </ul>
                         </div>
-                        <div th:if="${#lists.isEmpty(friends)}">
-                            <p>No friends found.</p>
-                        </div>
                     </div>
-
                 </div>
             </div>
         </div>

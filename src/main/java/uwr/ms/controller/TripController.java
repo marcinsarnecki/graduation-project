@@ -81,7 +81,7 @@ public class TripController {
             friends.sort(Comparator.comparing(UserEntity::getName, String.CASE_INSENSITIVE_ORDER));
             model.addAttribute("tripOwner", username);
             model.addAttribute("tripId", tripId);
-            model.addAttribute("tripName", tripService.findTripById(tripId).get().getName());
+            model.addAttribute("tripName", trip.getName());
             model.addAttribute("participants", participants);
             model.addAttribute("friends", friends);
 
@@ -192,7 +192,7 @@ public class TripController {
                     .map(UserEntity::getUsername)
                     .collect(Collectors.toSet());
             List<ParticipantDTO> participantDTOs = tripService.findAllParticipantsByTripId(trip.getId()).stream()
-                    .map(p -> new ParticipantDTO(p.getUser().getUsername(), p.getUser().getName(), potentialFriendsUsernames.contains(p.getUser().getUsername()))).toList();
+                    .map(p -> new ParticipantDTO(p.getUser().getUsername(), p.getUser().getName(), p.getUser().getImageUrl(), potentialFriendsUsernames.contains(p.getUser().getUsername()))).toList();
 
             model.addAttribute("participants", participantDTOs);
             model.addAttribute("events", getEventsSortedByDateAndTime(trip.getEvents()));
@@ -256,6 +256,6 @@ public class TripController {
     }
 
 
-    public record ParticipantDTO(String username, String name, boolean isPotentialFriend) {}
+    public record ParticipantDTO(String username, String name, String imageUrl, boolean isPotentialFriend) {}
 }
 

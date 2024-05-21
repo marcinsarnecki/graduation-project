@@ -1,52 +1,64 @@
 <div data-th-fragment="content">
     <div class="container mt-3">
         <div class="row justify-content-center">
-            <div class="col-md-6 col-lg-4">
-                <th:block th:replace="~{fragments/alert_message_fragment::alertMessages(${errorMessages}, ${successMessage})}"></th:block>
+            <div class="col-md-8 col-lg-6">
+                <th:block
+                        th:replace="~{fragments/alert_message_fragment::alertMessages(${errorMessages}, ${successMessage})}"></th:block>
                 <div class="card">
-                    <div class="card-header d-flex align-items-center justify-content-center" style="padding: 1rem;">
+                    <div class="card-header d-flex align-items-center justify-content-center" style="padding: 0.8rem;">
                         <h5 class="mb-0">Friend Requests</h5>
                     </div>
                     <div class="card-body">
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item d-flex justify-content-between align-items-center" data-th-each="request : ${friendRequests}">
-                                <span data-th-text="${request.requester.username}"></span>
-                                <div>
-                                    <form data-th-action="@{/friends/accept-request}" method="post" class="d-inline">
-                                        <input type="hidden" name="requestId" data-th-value="${request.id}" />
-                                        <button type="submit" class="btn btn-outline-primary btn-sm">Accept</button>
-                                    </form>
-                                    <form data-th-action="@{/friends/decline-request}" method="post" class="d-inline">
-                                        <input type="hidden" name="requestId" data-th-value="${request.id}" />
-                                        <button type="submit" class="btn btn-outline-secondary btn-sm">Decline</button>
-                                    </form>
-                                    <form data-th-action="@{/friends/block-request}" method="post" class="d-inline">
-                                        <input type="hidden" name="requestId" data-th-value="${request.id}" />
-                                        <button type="submit" class="btn btn-outline-danger btn-sm">Block</button>
-                                    </form>
-                                </div>
-                            </li>
-                            <li class="list-group-item" data-th-if="${friendRequests.isEmpty()}">
-                                No friend requests.
-                            </li>
-                        </ul>
+                        <div style="max-height: 39rem; overflow-y: auto; padding: 0;">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center"
+                                    th:each="request : ${friendRequests}">
+                                    <div class="d-flex align-items-center">
+                                        <img th:if="${request.requester.imageUrl != null && !request.requester.imageUrl.isEmpty()}"
+                                             th:src="${request.requester.imageUrl}" alt="Avatar" class="rounded-circle"
+                                             style="width: 2rem; height: 2rem; margin-right: 0.5rem;">
+                                        <span th:text="${request.requester.name} + (${request.requester.name} != ${request.requester.username} ? ' (' + ${request.requester.username} + ')' : '')"></span>
+                                    </div>
+                                    <div>
+                                        <form th:action="@{/friends/accept-request}" method="post"
+                                              class="d-inline">
+                                            <input type="hidden" name="requestId" th:value="${request.id}"/>
+                                            <button type="submit" class="btn btn-outline-success btn-sm">Accept</button>
+                                        </form>
+                                        <form th:action="@{/friends/decline-request}" method="post"
+                                              class="d-inline">
+                                            <input type="hidden" name="requestId" th:value="${request.id}"/>
+                                            <button type="submit" class="btn btn-outline-secondary btn-sm">Decline
+                                            </button>
+                                        </form>
+                                        <form th:action="@{/friends/block-request}" method="post" class="d-inline">
+                                            <input type="hidden" name="requestId" th:value="${request.id}"/>
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">Block</button>
+                                        </form>
+                                    </div>
+                                </li>
+                                <li class="list-group-item text-center" th:if="${friendRequests.isEmpty()}">
+                                    You don't have any friend requests.
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
-                <div class="card mt-4" data-th-if="${!blockedRequests.isEmpty()}">
+                <div class="card mt-4" th:if="${!blockedRequests.isEmpty()}">
                     <div class="card-body">
                         <h5 class="card-title text-center">Blocked Users</h5>
                         <ul class="list-group list-group-flush">
-                            <li class="list-group-item d-flex justify-content-between align-items-center" data-th-each="blocked : ${blockedRequests}">
-                                <span data-th-text="${blocked.requester.username}"></span>
-                                <form data-th-action="@{/friends/unblock-request}" method="post" class="d-inline">
-                                    <input type="hidden" name="requestId" data-th-value="${blocked.id}" />
+                            <li class="list-group-item d-flex justify-content-between align-items-center"
+                                th:each="blocked : ${blockedRequests}">
+                                <span th:text="${blocked.requester.username}"></span>
+                                <form th:action="@{/friends/unblock-request}" method="post" class="d-inline">
+                                    <input type="hidden" name="requestId" th:value="${blocked.id}"/>
                                     <button type="submit" class="btn btn-outline-warning btn-sm">Unblock</button>
                                 </form>
                             </li>
                         </ul>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
