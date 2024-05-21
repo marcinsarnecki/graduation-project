@@ -14,7 +14,6 @@ import java.util.Optional;
 public interface TripParticipantEntityRepository extends JpaRepository<TripParticipantEntity, Long> {
     Optional<TripParticipantEntity> findByTripAndUser(TripEntity trip, UserEntity user);
 
-    List<TripParticipantEntity> findByUserAndRole(UserEntity user, TripParticipantRole role);
     @Query("SELECT DISTINCT t FROM TripParticipantEntity tp JOIN tp.trip t WHERE tp.user.username = :username")
     List<TripEntity> findDistinctTripsByUserUsername(@Param("username") String username);
 

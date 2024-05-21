@@ -162,6 +162,7 @@ public class TripService {
         }
     }
 
+    @Transactional(readOnly = true)
     public List<TripInvitationEntity> getTripInvitations(String username) {
         return tripInvitationRepository.findByReceiverUsername(username);
     }
@@ -191,6 +192,7 @@ public class TripService {
         tripInvitationRepository.delete(invitation);
     }
 
+    @Transactional
     public void declineInvitation(Long invitationId, String username) {
         TripInvitationEntity invitation = tripInvitationRepository.findById(invitationId)
                 .orElseThrow(() -> new IllegalArgumentException(Message.INVITATION_NOT_FOUND.toString()));

@@ -3,7 +3,7 @@ package uwr.ms.controller;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.*;
 import uwr.ms.constant.LoginProvider;
 import uwr.ms.constant.Message;
 import uwr.ms.exception.ValidationException;
@@ -11,9 +11,6 @@ import uwr.ms.model.AppUser;
 import jakarta.validation.Valid;
 import lombok.Value;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import uwr.ms.service.AppUserService;
 
@@ -70,7 +67,7 @@ public class AppUserController {
             redirectAttributes.addFlashAttribute("errorMessages", e.getErrors());
             return "redirect:/app-user/change-password";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", String.format(Message.PASSWORD_CHANGE_FAILED.toString(), e.getMessage()));
+            redirectAttributes.addFlashAttribute("errorMessages", String.format(Message.PASSWORD_CHANGE_FAILED.toString(), e.getMessage()));
             return "redirect:/app-user/change-password";
         }
         return "redirect:/app-user/change-password";
@@ -93,14 +90,31 @@ public class AppUserController {
             appUserService.updateUserProfile(username, editProfileRequest);
             redirectAttributes.addFlashAttribute("successMessage", Message.PROFILE_UPDATE_SUCCESS.toString());
         } catch (ValidationException e) {
-            redirectAttributes.addFlashAttribute("errors", e.getErrors());
-            return "redirect:/app-user/edit-profile";
+            redirectAttributes.addFlashAttribute("errorMessages", e.getErrors());
         }
         catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("errors", String.format(Message.PROFILE_UPDATE_FAILED.toString(), e.getMessage()));
-            return "redirect:/app-user/edit-profile";
+            redirectAttributes.addFlashAttribute("errorMessages", String.format(Message.PROFILE_UPDATE_FAILED.toString(), e.getMessage()));
         }
         return "redirect:/app-user/edit-profile";
+    }
+
+    @GetMapping("/confirm-delete-account")
+    public String confirmDeleteAccount() {
+        return "app-user/confirm_delete_account";
+    }
+    @PostMapping("/delete-account")
+    public String deleteAccount(@RequestParam("password") String password, RedirectAttributes redirectAttributes) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            appUserService.verifyPassword(username, password);
+            appUserService.deleteUser(username);
+            redirectAttributes.addFlashAttribute("successMessage", Message.ACCOUNT_DELETION_SUCCESS.toString());
+            return "redirect:/login";
+        }
+        catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessages", String.format(Message.ACCOUNT_DELETION_FAILED.toString(), e.getMessage()));
+            return "redirect:/app-user/edit-profile";
+        }
     }
 }
 

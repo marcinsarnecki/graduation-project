@@ -9,6 +9,7 @@ public enum Message {
     //passwords
     CURRENT_PASSWORD_INCORRECT("Current password is incorrect."),
     INVALID_OLD_PASSWORD("Invalid old password."),
+    INVALID_PASSWORD("Invalid password."),
     PASSWORDS_DONT_MATCH("New password and confirmed new password don't match."),
     PASSWORD_CHANGE_FAILED("An error occurred while changing the password: %s"),
     PASSWORD_CHANGE_SUCCESS("Password successfully changed."),
@@ -83,6 +84,8 @@ public enum Message {
     INVALID_USER_INSTANCE("User must be an instance of AppUser."),
     PROFILE_UPDATE_SUCCESS("Profile updated successfully."),
     PROFILE_UPDATE_FAILED("Failed to update profile: %s"),
+    ACCOUNT_DELETION_FAILED("Failed to delete account: %s"),
+    ACCOUNT_DELETION_SUCCESS("Account deleted successfully!"),
     REGISTRATION_SUCCESS("Registration successful, you can now log in."),
     USER_ALREADY_EXISTS("User %s already exists."),
     USER_NOT_FOUND("User %s not found.");

@@ -3,7 +3,6 @@ package uwr.ms.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import uwr.ms.constant.LoginProvider;
 import uwr.ms.constant.Message;
-import uwr.ms.constant.TripParticipantRole;
 import uwr.ms.controller.AppUserController;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -19,14 +18,8 @@ import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uwr.ms.exception.ValidationException;
-import uwr.ms.model.entity.AuthorityEntity;
-import uwr.ms.model.entity.TripEntity;
-import uwr.ms.model.entity.TripParticipantEntity;
-import uwr.ms.model.entity.UserEntity;
-import uwr.ms.model.repository.AuthorityEntityRepository;
-import uwr.ms.model.repository.TripEntityRepository;
-import uwr.ms.model.repository.TripParticipantEntityRepository;
-import uwr.ms.model.repository.UserEntityRepository;
+import uwr.ms.model.entity.*;
+import uwr.ms.model.repository.*;
 import uwr.ms.model.AppUser;
 import uwr.ms.util.ValidationUtils;
 
@@ -36,18 +29,24 @@ import java.util.*;
 public class AppUserService implements UserDetailsManager {
     private final PasswordEncoder passwordEncoder;
     private final DefaultOAuth2UserService defaultOAuth2UserService = new DefaultOAuth2UserService();
+    private final TripService tripService;
     private final UserEntityRepository userEntityRepository;
     private final AuthorityEntityRepository authorityEntityRepository;
     private final TripParticipantEntityRepository tripParticipantEntityRepository;
+    private final TripInvitationRepository tripInvitationRepository;
     private final TripEntityRepository tripEntityRepository;
+    private final FriendshipRepository friendshipRepository;
 
     @Autowired
-    public AppUserService(PasswordEncoder passwordEncoder, UserEntityRepository userEntityRepository, AuthorityEntityRepository authorityEntityRepository, TripParticipantEntityRepository tripParticipantEntityRepository, TripEntityRepository tripEntityRepository) {
+    public AppUserService(PasswordEncoder passwordEncoder, TripService tripService, UserEntityRepository userEntityRepository, AuthorityEntityRepository authorityEntityRepository, TripParticipantEntityRepository tripParticipantEntityRepository, TripInvitationRepository tripInvitationRepository, TripEntityRepository tripEntityRepository, FriendshipRepository friendshipRepository) {
         this.passwordEncoder = passwordEncoder;
+        this.tripService = tripService;
         this.userEntityRepository = userEntityRepository;
         this.authorityEntityRepository = authorityEntityRepository;
         this.tripParticipantEntityRepository = tripParticipantEntityRepository;
+        this.tripInvitationRepository = tripInvitationRepository;
         this.tripEntityRepository = tripEntityRepository;
+        this.friendshipRepository = friendshipRepository;
     }
 
     @Override
@@ -148,13 +147,18 @@ public class AppUserService implements UserDetailsManager {
     public void deleteUser(String username) {
         UserEntity user = userEntityRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException(String.format(Message.USER_NOT_FOUND.toString(), username)));
-        List<TripParticipantEntity> ownedTripParticipants = tripParticipantEntityRepository.findByUserAndRole(user, TripParticipantRole.OWNER);
-        for (TripParticipantEntity ownedParticipant : ownedTripParticipants) {
-            TripEntity trip = ownedParticipant.getTrip();
-            trip.getParticipants().clear();
-            tripEntityRepository.save(trip);
-            tripEntityRepository.delete(trip);
+        List<FriendshipEntity> friendships = friendshipRepository.findByAddresseeUsernameOrRequesterUsername(username);
+        friendshipRepository.deleteAll(friendships);
+        List<TripInvitationEntity> invitations = tripInvitationRepository.findByReceiverUsername(username);
+        tripInvitationRepository.deleteAll(invitations);
+        List<TripEntity> trips = tripParticipantEntityRepository.findDistinctTripsByUserUsername(username);
+        for(TripEntity trip : trips) {
+            if(tripService.isUserOwner(trip, username))
+                tripService.deleteTrip(trip.getId(), username);
+            else
+                tripService.removeParticipant(trip.getId(), username, username);
         }
+        user.getUserAuthorities().clear();
         userEntityRepository.delete(user);
     }
 
@@ -226,6 +230,15 @@ public class AppUserService implements UserDetailsManager {
             throw new ValidationException(validationErrors);
 
         changePassword(username, changePasswordRequest.currentPassword(), changePasswordRequest.newPassword());
+    }
+
+    @Transactional(readOnly = true)
+    public void verifyPassword(String username, String password) {
+        UserEntity user = userEntityRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException(String.format(Message.USER_NOT_FOUND.toString(), username)));
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new IllegalArgumentException(Message.INVALID_PASSWORD.toString());
+        }
     }
 }
 

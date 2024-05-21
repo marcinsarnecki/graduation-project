@@ -80,8 +80,10 @@ document.addEventListener('DOMContentLoaded', function () {
     friendInput.addEventListener('input', filterFriends);
 
     friendsList.addEventListener('click', function(e) {
-        if (e.target.tagName === 'LI') {
-            selectFriend(e.target);
+        const target = e.target;
+        const listItem = target.closest('li');
+        if (listItem) {
+            selectFriend(listItem);
         }
     });
 
@@ -142,8 +144,6 @@ function loadMapPreview() {
     const travelMode = document.getElementById('travelMode').value;
     const mapPreviewContainer = document.getElementById('mapPreview');
 
-    console.log('inside map preview load')
-
     mapPreview = new google.maps.Map(mapPreviewContainer, {
         center: { lat: 0, lng: 0 },
         mapTypeId: google.maps.MapTypeId.ROADMAP
@@ -168,7 +168,6 @@ function loadMapPreview() {
             }
         });
     } else if (eventType === "SINGLE" && location) {
-        console.log('location = ', location)
         const service = new google.maps.places.PlacesService(mapPreview);
         service.textSearch({ query: location }, function(results, status) {
             if (status === google.maps.places.PlacesServiceStatus.OK) {

@@ -9,7 +9,6 @@ function loadGoogleMapsScript(callback) {
     script.src = 'https://maps.googleapis.com/maps/api/js?key=' + apiKey + '&loading=async' + '&libraries=places' + '&callback=initializeFirstEvent';
     script.id = 'googleMapsScript';
     document.head.appendChild(script);
-    console.log('ending load map script')
 }
 
 function initializeFirstEvent() {
