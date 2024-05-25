@@ -9,10 +9,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import uwr.ms.constant.Message;
-import uwr.ms.dto.TripDTO;
 import uwr.ms.model.entity.*;
 import uwr.ms.service.FriendshipService;
 import uwr.ms.service.TripService;
+
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
@@ -130,6 +131,8 @@ public class TripController {
         try {
             tripService.removeParticipant(tripId, participantUsername, username);
             redirectAttributes.addFlashAttribute("successMessage", Message.PARTICIPANT_REMOVED_SUCCESS);
+            if(username.equals(participantUsername))
+                return "redirect:/trips/my-trips";
             return "redirect:/trips/edit/" + tripId;
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessages", e.getMessage());
@@ -257,5 +260,6 @@ public class TripController {
 
 
     public record ParticipantDTO(String username, String name, String imageUrl, boolean isPotentialFriend) {}
+    public record TripDTO(Long id, String name, LocalDate startDate, boolean isOwner) {}
 }
 

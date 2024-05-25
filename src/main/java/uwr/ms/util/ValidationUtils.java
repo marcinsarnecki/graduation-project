@@ -1,5 +1,6 @@
 package uwr.ms.util;
 import lombok.experimental.UtilityClass;
+import uwr.ms.constant.Message;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,16 +12,16 @@ public final class ValidationUtils {
     public List<String> validatePassword(String password) {
         List<String> errors = new ArrayList<>();
         if (password == null || password.length() < 8) {
-            errors.add("Password must be at least 8 characters long");
+            errors.add(Message.PASSWORD_MIN_LENGTH.toString());
         }
         if (!Pattern.compile("[A-Z]").matcher(password).find()) {
-            errors.add("Password must contain at least one uppercase letter");
+            errors.add(Message.PASSWORD_UPPERCASE.toString());
         }
         if (!Pattern.compile("[a-z]").matcher(password).find()) {
-            errors.add("Password must contain at least one lowercase letter");
+            errors.add(Message.PASSWORD_LOWERCASE.toString());
         }
         if (!Pattern.compile("[0-9]").matcher(password).find()) {
-            errors.add("Password must contain at least one digit");
+            errors.add(Message.PASSWORD_DIGIT.toString());
         }
         return errors;
     }
@@ -28,7 +29,7 @@ public final class ValidationUtils {
     public List<String> validateEmail(String email) {
         List<String> errors = new ArrayList<>();
         if (email == null || !Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$").matcher(email).find()) {
-            errors.add("Email should be valid");
+            errors.add(Message.EMAIL_INVALID.toString());
         }
         return errors;
     }

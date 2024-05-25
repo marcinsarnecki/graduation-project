@@ -140,10 +140,10 @@ class AppUserServiceTest {
 
     private static Stream<Arguments> invalidPasswordProvider() {
         return Stream.of(
-                Arguments.of("short", "Password must be at least 8 characters long"),
-                Arguments.of("alllowercase", "Password must contain at least one uppercase letter"),
-                Arguments.of("ALLUPPERCASE", "Password must contain at least one lowercase letter"),
-                Arguments.of("NoDigitsHere!", "Password must contain at least one digit"));
+                Arguments.of("short", Message.PASSWORD_MIN_LENGTH.toString()),
+                Arguments.of("alllowercase", Message.PASSWORD_UPPERCASE.toString()),
+                Arguments.of("ALLUPPERCASE", Message.PASSWORD_LOWERCASE.toString()),
+                Arguments.of("NoDigitsHere!", Message.PASSWORD_DIGIT.toString()));
     }
 
     @Test

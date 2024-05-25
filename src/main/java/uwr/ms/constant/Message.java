@@ -88,7 +88,13 @@ public enum Message {
     ACCOUNT_DELETION_SUCCESS("Account deleted successfully!"),
     REGISTRATION_SUCCESS("Registration successful, you can now log in."),
     USER_ALREADY_EXISTS("User %s already exists."),
-    USER_NOT_FOUND("User %s not found.");
+    USER_NOT_FOUND("User %s not found."),
+    //validation utils
+    PASSWORD_MIN_LENGTH("Password must be at least 8 characters long."),
+    PASSWORD_UPPERCASE("Password must contain at least one uppercase letter."),
+    PASSWORD_LOWERCASE("Password must contain at least one lowercase letter."),
+    PASSWORD_DIGIT("Password must contain at least one digit."),
+    EMAIL_INVALID("Email should be valid.");
 
     private final String message;
 

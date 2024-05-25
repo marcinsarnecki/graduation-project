@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import uwr.ms.constant.EventType;
 import uwr.ms.constant.Message;
 import uwr.ms.constant.TripParticipantRole;
-import uwr.ms.dto.TripDTO;
+import uwr.ms.controller.TripController;
 import uwr.ms.model.entity.*;
 import uwr.ms.model.repository.*;
 
@@ -53,10 +53,10 @@ public class TripService {
     }
 
     @Transactional(readOnly = true)
-    public List<TripDTO> findAllTripsByUser(String username) {
+    public List<TripController.TripDTO> findAllTripsByUser(String username) {
         List<TripEntity> trips = tripParticipantEntityRepository.findDistinctTripsByUserUsername(username);
         return trips.stream()
-                .map(trip -> new TripDTO(
+                .map(trip -> new TripController.TripDTO(
                         trip.getId(),
                         trip.getName(),
                         trip.getStartDate(),
