@@ -12,7 +12,7 @@ function loadGoogleMapsScript() {
 document.addEventListener('DOMContentLoaded', function () {
     loadGoogleMapsScript();
 
-    document.getElementById('eventFormSubmitBtn').addEventListener('click', function(event) {
+    document.getElementById('eventFormSubmitBtn').addEventListener('click', function (event) {
         const form = document.getElementById('eventForm');
 
         if (form.checkValidity() === false) {
@@ -77,15 +77,20 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    friendInput.addEventListener('input', filterFriends);
+    if (friendInput) {
+        friendInput.addEventListener('input', filterFriends);
+    }
 
-    friendsList.addEventListener('click', function(e) {
-        const target = e.target;
-        const listItem = target.closest('li');
-        if (listItem) {
-            selectFriend(listItem);
-        }
-    });
+    if(friendsList) {
+        friendsList.addEventListener('click', function (e) {
+            const target = e.target;
+            const listItem = target.closest('li');
+            if (listItem) {
+                selectFriend(listItem);
+            }
+        });
+    }
+
 
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', function (e) {
