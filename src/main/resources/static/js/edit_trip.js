@@ -12,6 +12,10 @@ function loadGoogleMapsScript() {
 document.addEventListener('DOMContentLoaded', function () {
     loadGoogleMapsScript();
 
+    document.getElementById('saveChangesButton').addEventListener('click', function() {
+        document.getElementById('editTripForm').submit();
+    });
+
     document.getElementById('eventFormSubmitBtn').addEventListener('click', function (event) {
         const form = document.getElementById('eventForm');
 
