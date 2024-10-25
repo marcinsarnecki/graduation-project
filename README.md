@@ -1,6 +1,6 @@
 # travel-planner
 
-Travel Planner is web application for planning trips, managing expenses, and sharing travel plans with friends. This was my graduation project (UWr 06.2024).
+Travel Planner is web application for planning trips, managing expenses, and sharing travel plans with friends. This was my graduation project (UWr 06.2024). It uses Java, Spring, Docker, Unit tests, HTML, CSS, JS.
 
 ## Installation
 
